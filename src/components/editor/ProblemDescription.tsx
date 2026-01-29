@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useEditorStore } from "@/store";
 import { DIFFICULTY_COLORS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { FileText, Calculator, History } from "lucide-react";
+import { FileText, Calculator, History, Activity } from "lucide-react";
+import { SubmissionResult } from "./SubmissionResult";
 
 export function ProblemDescription() {
     const { currentProblem, activeTab, setActiveTab } = useEditorStore();
@@ -48,6 +49,13 @@ export function ProblemDescription() {
                         >
                             <History className="mr-2 h-4 w-4" />
                             Submissions
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="results"
+                            className="relative h-10 rounded-none border-b-2 border-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                        >
+                            <Activity className="mr-2 h-4 w-4" />
+                            Results
                         </TabsTrigger>
                     </TabsList>
                 </div>
@@ -100,6 +108,10 @@ export function ProblemDescription() {
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                         <p>No submissions yet.</p>
                     </div>
+                </TabsContent>
+
+                <TabsContent value="results" className="flex-1 p-0 m-0 h-full">
+                     <SubmissionResult />
                 </TabsContent>
             </Tabs>
         </div>

@@ -18,7 +18,7 @@ interface EditorState {
   // Custom test cases for "Run" feature
   customTestCases: Array<{ input: Record<string, unknown> }>;
   activeTestCaseIndex: number;
-  activeTab: "description" | "solutions" | "submissions";
+  activeTab: "description" | "solutions" | "submissions" | "results";
   
   // Actions
   setProblem: (problem: QuestionDetail) => void;
@@ -30,7 +30,7 @@ interface EditorState {
   removeCustomTestCase: (index: number) => void;
   updateCustomTestCase: (index: number, testCase: { input: Record<string, unknown> }) => void;
   setActiveTestCaseIndex: (index: number) => void;
-  setActiveTab: (tab: "description" | "solutions" | "submissions") => void;
+  setActiveTab: (tab: "description" | "solutions" | "submissions" | "results") => void;
   reset: () => void;
 }
 
@@ -42,7 +42,7 @@ const initialState = {
   language: "java",
   customTestCases: [],
   activeTestCaseIndex: 0,
-  activeTab: "description" as "description" | "solutions" | "submissions",
+  activeTab: "description" as "description" | "solutions" | "submissions" | "results",
 };
 
 export const useEditorStore = create<EditorState>((set) => ({

@@ -1,65 +1,30 @@
 import { API_URLS, ENDPOINTS } from "../constants";
-import type {
-  SubmissionRequest,
-  SubmissionResponse,
-  SubmissionDetail,
-} from "@/types";
-
-const submissionServiceUrl = API_URLS.SUBMISSION;
 
 /**
- * Submit code for evaluation (saves to DB, runs against all test cases)
+ * Submits user solution to the Submission Service.
+ *
+ * @param payload - Object containing problemId, language and source code.
+ * @returns Promise resolving to the submission result.
  */
-export async function submitCode(
-  request: SubmissionRequest
-): Promise<SubmissionResponse> {
-  const url = `${submissionServiceUrl}${ENDPOINTS.SUBMISSIONS}`;
-  
+export async function submitSolution(payload: {
+  userId: number;
+  questionId: number;
+  language: string;
+  code: string;
+}): Promise<any> {
+  const url = `${API_URLS.SUBMISSION}${ENDPOINTS.SUBMISSIONS}`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify(payload),
   });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to submit code: ${response.statusText}`);
-  }
-  
-  return response.json();
-}
 
-/**
- * Get submission details by ID
- */
-export async function getSubmission(
-  submissionId: string
-): Promise<SubmissionDetail> {
-  const url = `${submissionServiceUrl}${ENDPOINTS.SUBMISSIONS}/${submissionId}`;
-  const response = await fetch(url);
-  
   if (!response.ok) {
-    throw new Error(`Failed to fetch submission: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Submission request failed: ${response.status} ${errorText}`);
   }
-  
-  return response.json();
-}
 
-/**
- * Get user's submission history
- */
-export async function getUserSubmissions(
-  userId: number,
-  page = 0,
-  size = 20
-): Promise<SubmissionDetail[]> {
-  const url = `${submissionServiceUrl}${ENDPOINTS.SUBMISSIONS}/user/${userId}?page=${page}&size=${size}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user submissions: ${response.statusText}`);
-  }
-  
   return response.json();
 }

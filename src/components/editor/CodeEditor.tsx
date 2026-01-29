@@ -8,12 +8,8 @@ import { Loader2 } from "lucide-react";
 export function CodeEditor() {
   const { code, language, setCode } = useEditorStore();
   const { theme } = useUserStore();
-  const [mounted, setMounted] = useState(false);
+  // Removed mounted state and effect; editor renders directly
   const monaco = useMonaco();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (monaco) {
@@ -24,13 +20,7 @@ export function CodeEditor() {
     }
   }, [theme, monaco]);
 
-  if (!mounted) {
-    return (
-      <div className="flex h-full items-center justify-center bg-muted/10">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="h-full w-full overflow-hidden bg-[#1e1e1e]">

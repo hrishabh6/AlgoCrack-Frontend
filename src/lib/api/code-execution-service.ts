@@ -1,4 +1,4 @@
-// src/lib/api/code-execution-service.ts
+import { API_URLS, ENDPOINTS } from "../constants";
 
 /**
  * Calls the Code Execution Engine (CXE) to run user code against test cases.
@@ -11,8 +11,11 @@ export async function runCode(payload: {
   source: string;
   testCases: any[];
 }): Promise<any> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
-  const response = await fetch(`${baseUrl}/execute`, {
+  // Use the standalone CXE service URL
+  // Matches ExecutionController @RequestMapping("/api/v1/execution") + @PostMapping("/submit")
+  const url = `${API_URLS.EXECUTION}${ENDPOINTS.EXECUTION}/submit`;
+  
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -26,4 +29,51 @@ export async function runCode(payload: {
   }
 
   return response.json();
+}
+
+/**
+ * Get status of an async execution.
+ */
+export async function getExecutionStatus(submissionId: string): Promise<any> {
+  const url = `${API_URLS.EXECUTION}${ENDPOINTS.EXECUTION}/status/${submissionId}`;
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+     // If not found, it might still be propagating, or failed.
+     return null; 
+  }
+  return response.json();
+}
+
+/**
+ * Get full results of a completed execution.
+ */
+export async function getExecutionResults(submissionId: string): Promise<any> {
+    const url = `${API_URLS.EXECUTION}${ENDPOINTS.EXECUTION}/results/${submissionId}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch results: ${response.statusText}`);
+    }
+    return response.json();
+}
+
+/**
+ * Polls for execution completion.
+ */
+export async function pollExecution(submissionId: string, maxAttempts = 20, intervalMs = 500): Promise<any> {
+    for (let i = 0; i < maxAttempts; i++) {
+        await new Promise(r => setTimeout(r, intervalMs));
+        const status = await getExecutionStatus(submissionId);
+        
+        if (status && (status.status === "COMPLETED" || status.status === "FAILED" || status.status === "ERROR")) {
+            // Fetch full results if completed
+            if (status.status === "COMPLETED" || status.status === "ERROR" || status.status === "FAILED") {
+                 return getExecutionResults(submissionId);
+            }
+             // For simple failure/error without results endpoint data (if any), return status
+             return status;
+        }
+    }
+    throw new Error("Execution timed out");
 }

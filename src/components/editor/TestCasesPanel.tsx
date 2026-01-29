@@ -18,7 +18,9 @@ export function TestCasesPanel() {
         isRunning,
         verdict,
         compilationOutput,
-        errorMessage
+        errorMessage,
+        runtimeMs,
+        memoryKb,
     } = useSubmissionStore();
 
     // Combine standard and custom test cases for display
@@ -39,6 +41,12 @@ export function TestCasesPanel() {
     return (
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between border-b px-2 min-h-[40px]">
+                {/* Overall result summary */}
+                <div className="flex items-center gap-4 text-sm">
+                    {verdict && <span className="font-medium">Verdict: {verdict}</span>}
+                    {runtimeMs !== null && <span>Time: {runtimeMs} ms</span>}
+                    {memoryKb !== null && <span>Memory: {memoryKb} KB</span>}
+                </div>
                 <div className="flex items-center overflow-x-auto no-scrollbar">
                     {testCases.map((tc, index) => {
                         const result = testCaseResults?.find(r => r.index === index);
@@ -77,7 +85,7 @@ export function TestCasesPanel() {
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-4">
                     {/* Compilation/Runtime Error Display */}
-                    {(errorMessage || compilationOutput) && (
+                    {(errorMessage || (compilationOutput && verdict !== "ACCEPTED")) && (
                         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20 mb-4">
                             <div className="flex items-center gap-2 font-semibold mb-1">
                                 <AlertCircle className="h-4 w-4" />
