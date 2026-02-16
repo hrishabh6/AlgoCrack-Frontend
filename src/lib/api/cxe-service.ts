@@ -4,7 +4,8 @@
  * CXE is now an internal backend service not directly accessible from frontend.
  */
 
-import { API_URLS, ENDPOINTS } from "../constants";
+import { ENDPOINTS } from "../constants";
+import { apiClient } from "../api-client";
 import type { HealthResponse } from "@/types";
 
 // Legacy types for backward compatibility
@@ -45,8 +46,6 @@ interface LegacyExecutionResultsResponse {
   }>;
 }
 
-const cxeServiceUrl = API_URLS.EXECUTION;
-
 /**
  * @deprecated Use submission-service.ts runCode() instead
  */
@@ -55,21 +54,10 @@ export async function runCode(
 ): Promise<LegacyExecutionResponse> {
   console.warn("cxe-service.runCode is deprecated. Use submission-service.runCode instead.");
   
-  const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/submit`;
-  
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to run code: ${response.statusText}`);
-  }
-  
-  return response.json();
+  // Note: This endpoint might not exist on Gateway if CXE is internal only.
+  // But keeping it consistent with valid URL construction just in case.
+  // Ideally this function should be removed or redirect to submission service logic.
+  return apiClient.post<LegacyExecutionResponse>(`${ENDPOINTS.EXECUTION}/submit`, request);
 }
 
 /**
@@ -78,14 +66,7 @@ export async function runCode(
 export async function getExecutionStatus(
   submissionId: string
 ): Promise<LegacyExecutionStatusResponse> {
-  const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/status/${submissionId}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to get execution status: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.get<LegacyExecutionStatusResponse>(`${ENDPOINTS.EXECUTION}/status/${submissionId}`);
 }
 
 /**
@@ -94,14 +75,7 @@ export async function getExecutionStatus(
 export async function getExecutionResults(
   submissionId: string
 ): Promise<LegacyExecutionResultsResponse> {
-  const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/results/${submissionId}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to get execution results: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.get<LegacyExecutionResultsResponse>(`${ENDPOINTS.EXECUTION}/results/${submissionId}`);
 }
 
 /**
@@ -110,29 +84,12 @@ export async function getExecutionResults(
 export async function cancelExecution(
   submissionId: string
 ): Promise<{ success: boolean; message: string; submissionId: string }> {
-  const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/cancel/${submissionId}`;
-  
-  const response = await fetch(url, {
-    method: "DELETE",
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to cancel execution: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.delete<{ success: boolean; message: string; submissionId: string }>(`${ENDPOINTS.EXECUTION}/cancel/${submissionId}`);
 }
 
 /**
  * Check CXE service health (still useful for monitoring)
  */
 export async function getHealth(): Promise<HealthResponse> {
-  const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/health`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to get health status: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.get<HealthResponse>(`${ENDPOINTS.EXECUTION}/health`);
 }

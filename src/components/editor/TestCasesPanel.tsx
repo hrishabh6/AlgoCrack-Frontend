@@ -8,8 +8,17 @@ import { Button } from "@/components/ui/button";
 import { VERDICT_DISPLAY } from "@/types";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function TestCasesPanel() {
+    const { isAuthenticated } = useAuth();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const currentPath = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    const loginUrl = `/auth/signin?next=${encodeURIComponent(currentPath)}`;
+    const signupUrl = `/auth/signup?next=${encodeURIComponent(currentPath)}`;
     const {
         testcases,
         activeTestCaseIndex,
@@ -70,8 +79,19 @@ export function TestCasesPanel() {
         );
     }
 
+
+
     return (
-        <div className="flex flex-col h-full bg-background border-t">
+        <div className="flex flex-col h-full bg-background border-t relative">
+            {!isAuthenticated && (
+                <div className="absolute inset-x-0 top-[-40px] z-10 flex items-center justify-center h-10 bg-muted/50 backdrop-blur-sm border-b">
+                </div>
+            )}
+            {!isAuthenticated && (
+                <div className="w-full bg-secondary/30 p-2 text-center text-sm text-muted-foreground border-b">
+                    You need to <Link href={loginUrl} className="text-primary hover:underline font-medium">log in</Link> or <Link href={signupUrl} className="text-primary hover:underline font-medium">sign up</Link> to run or submit
+                </div>
+            )}
             {/* Main Tabs (Testcase vs Result) */}
             <div className="border-b px-2 flex items-center justify-between bg-muted/30">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

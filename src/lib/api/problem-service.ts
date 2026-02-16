@@ -1,4 +1,5 @@
-import { API_URLS, ENDPOINTS } from "../constants";
+import { ENDPOINTS } from "../constants";
+import { apiClient } from "../api-client";
 import type {
   QuestionSummary,
   QuestionDetail,
@@ -8,8 +9,6 @@ import type {
   PaginatedResponse,
   QuestionFilters,
 } from "@/types";
-
-const problemServiceUrl = API_URLS.PROBLEM;
 
 /**
  * Fetch paginated list of questions with filters
@@ -26,56 +25,30 @@ export async function getQuestions(
   if (filters.search) params.set("search", filters.search);
   if (filters.company) params.set("company", filters.company);
   
-  const url = `${problemServiceUrl}${ENDPOINTS.QUESTIONS}?${params.toString()}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch questions: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.get<PaginatedResponse<QuestionSummary>>(
+    `${ENDPOINTS.QUESTIONS}?${params.toString()}`
+  );
 }
 
 /**
  * Fetch a single question by ID
  */
 export async function getQuestionById(id: number): Promise<QuestionDetail> {
-  const url = `${problemServiceUrl}${ENDPOINTS.QUESTIONS}/${id}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch question: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.get<QuestionDetail>(`${ENDPOINTS.QUESTIONS}/${id}`);
 }
 
 /**
  * Fetch all tags
  */
 export async function getTags(): Promise<Tag[]> {
-  const url = `${problemServiceUrl}${ENDPOINTS.TAGS}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch tags: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.get<Tag[]>(`${ENDPOINTS.TAGS}`);
 }
 
 /**
  * Fetch test cases for a question (visible only)
  */
 export async function getTestCases(questionId: number): Promise<TestCase[]> {
-  const url = `${problemServiceUrl}${ENDPOINTS.TEST_CASES}/question/${questionId}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch test cases: ${response.statusText}`);
-  }
-  
-  const testCases: TestCase[] = await response.json();
+    const testCases = await apiClient.get<TestCase[]>(`${ENDPOINTS.TEST_CASES}/question/${questionId}`);
   // Filter to only show DEFAULT (non-hidden) test cases
   return testCases.filter((tc) => tc.type === "DEFAULT");
 }
@@ -84,12 +57,5 @@ export async function getTestCases(questionId: number): Promise<TestCase[]> {
  * Fetch solutions for a question
  */
 export async function getSolutions(questionId: number): Promise<Solution[]> {
-  const url = `${problemServiceUrl}${ENDPOINTS.SOLUTIONS}/question/${questionId}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch solutions: ${response.statusText}`);
-  }
-  
-  return response.json();
+  return apiClient.get<Solution[]>(`${ENDPOINTS.SOLUTIONS}/question/${questionId}`);
 }

@@ -1,4 +1,5 @@
-import { API_URLS, ENDPOINTS } from "../constants";
+import { ENDPOINTS } from "../constants";
+import { apiClient } from "../api-client";
 
 /**
  * Calls the Code Execution Engine (CXE) to run user code against test cases.
@@ -14,7 +15,6 @@ export async function runCode(payload: {
 }): Promise<any> {
   // Use the standalone CXE service URL
   // Matches ExecutionController @RequestMapping("/api/v1/execution") + @PostMapping("/submit")
-  const url = `${API_URLS.EXECUTION}${ENDPOINTS.EXECUTION}/submit`;
   
   const requestBody: any = {
     questionId: payload.questionId,
@@ -27,47 +27,28 @@ export async function runCode(payload: {
     requestBody.customTestCases = payload.customTestCases;
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`CXE request failed: ${response.status} ${errorText}`);
-  }
-
-  return response.json();
+  return apiClient.post<any>(`${ENDPOINTS.EXECUTION}/submit`, requestBody);
 }
 
 /**
  * Get status of an async execution.
  */
 export async function getExecutionStatus(submissionId: string): Promise<any> {
-  const url = `${API_URLS.EXECUTION}${ENDPOINTS.EXECUTION}/status/${submissionId}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) {
+  try {
+    return await apiClient.get<any>(`${ENDPOINTS.EXECUTION}/status/${submissionId}`);
+  } catch (error) {
      // If not found, it might still be propagating, or failed.
-     return null; 
+     // Previous code returned null on 404 (implied by response.ok check assumption/comment)
+     // Let's safe guard.
+     return null;
   }
-  return response.json();
 }
 
 /**
  * Get full results of a completed execution.
  */
 export async function getExecutionResults(submissionId: string): Promise<any> {
-    const url = `${API_URLS.EXECUTION}${ENDPOINTS.EXECUTION}/results/${submissionId}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch results: ${response.statusText}`);
-    }
-    return response.json();
+    return apiClient.get<any>(`${ENDPOINTS.EXECUTION}/results/${submissionId}`);
 }
 
 /**

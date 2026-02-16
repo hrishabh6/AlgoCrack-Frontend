@@ -7,12 +7,25 @@ import { Play, Send, Loader2 } from "lucide-react";
 import { useSubmissionStore, useEditorStore } from "@/store";
 import { runCode, submitSolution, pollSubmission } from "@/lib/api/submission-service";
 
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+
 export function ProblemActions() {
     console.log('>>> ProblemActions component rendered <<<');
     const { isRunning, isSubmitting, startRun, startSubmission, setResults, setError } = useSubmissionStore();
     const { language, code, currentProblem, getTestcasesForRun, setActiveTab } = useEditorStore();
+    const { user, isAuthenticated } = useAuth();
+    const router = useRouter();
+
+    if (!isAuthenticated) {
+        return null;
+    }
 
     const handleRun = async () => {
+        if (!isAuthenticated) {
+            router.push("/auth/signin");
+            return;
+        }
         if (!currentProblem) return;
 
         try {
@@ -67,6 +80,11 @@ export function ProblemActions() {
 
     const handleSubmit = async () => {
         console.log('====== SUBMIT BUTTON CLICKED ======');
+        if (!isAuthenticated) {
+            router.push("/auth/signin");
+            return;
+        }
+
         if (!currentProblem) {
             console.log('No currentProblem - returning early');
             return;
@@ -78,7 +96,7 @@ export function ProblemActions() {
             startSubmission(tempSubmissionId);
 
             const payload = {
-                userId: 1, // TODO: Get from auth context
+                userId: user?.userId ? Number(user.userId) : 0, // 0 or throw error if not found
                 questionId: currentProblem.id,
                 language,
                 code,

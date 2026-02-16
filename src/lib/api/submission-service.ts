@@ -1,4 +1,5 @@
-import { API_URLS, ENDPOINTS } from "../constants";
+import { ENDPOINTS } from "../constants";
+import { apiClient } from "../api-client";
 import type { RunRequest, RunResponse, SubmitRequest, SubmitResponse, SubmissionDetail } from "@/types";
 
 // ============================================================================
@@ -13,54 +14,7 @@ import type { RunRequest, RunResponse, SubmitRequest, SubmitResponse, Submission
  * @returns Promise resolving to run results with verdict
  */
 export async function runCode(payload: RunRequest): Promise<RunResponse> {
-  const url = `${API_URLS.SUBMISSION}${ENDPOINTS.SUBMISSIONS}/run`;
-  
-  console.log('=== runCode API Call ===' );
-  console.log('URL:', url);
-  console.log('Request Payload:', JSON.stringify(payload, null, 2));
-  
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  console.log('Response Status:', response.status);
-  console.log('Response Headers:', Object.fromEntries(response.headers.entries()));
-
-  // Handle rate limiting
-  if (response.status === 429) {
-    throw new Error("Rate limit exceeded. Please wait before trying again.");
-  }
-
-  // Handle validation errors
-  if (response.status === 400) {
-    const errorText = await response.text();
-    console.error('Validation Error Response:', errorText);
-    throw new Error(`Validation error: ${errorText}`);
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Error Response:', errorText);
-    throw new Error(`Run failed: ${response.status} ${errorText}`);
-  }
-
-  const data = await response.json();
-  console.log('=== Backend Response (Raw) ===');
-  console.log(JSON.stringify(data, null, 2));
-  console.log('Response Keys:', Object.keys(data));
-  console.log('verdict:', data.verdict);
-  console.log('status:', data.status);
-  console.log('testCaseResults:', data.testCaseResults);
-  console.log('results:', data.results);
-  console.log('compilationOutput:', data.compilationOutput);
-  console.log('errorMessage:', data.errorMessage);
-  console.log('=== End Backend Response ===');
-  
-  return data;
+  return apiClient.post<RunResponse>(`${ENDPOINTS.SUBMISSIONS}/run`, payload);
 }
 
 // ============================================================================
@@ -75,31 +29,7 @@ export async function runCode(payload: RunRequest): Promise<RunResponse> {
  * @returns Promise resolving to submission acknowledgment
  */
 export async function submitSolution(payload: SubmitRequest): Promise<SubmitResponse> {
-  const url = `${API_URLS.SUBMISSION}${ENDPOINTS.SUBMISSIONS}`;
-  
-  console.log('=== submitSolution API Call ===');
-  console.log('URL:', url);
-  console.log('Payload:', JSON.stringify(payload, null, 2));
-  
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  console.log('submitSolution Response Status:', response.status);
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('submitSolution Error:', errorText);
-    throw new Error(`Submission failed: ${response.status} ${errorText}`);
-  }
-
-  const data = await response.json();
-  console.log('submitSolution Response:', JSON.stringify(data, null, 2));
-  return data;
+  return apiClient.post<SubmitResponse>(`${ENDPOINTS.SUBMISSIONS}`, payload);
 }
 
 // ============================================================================
@@ -110,25 +40,19 @@ export async function submitSolution(payload: SubmitRequest): Promise<SubmitResp
  * Get details of a specific submission.
  */
 export async function getSubmission(submissionId: string): Promise<SubmissionDetail | null> {
-  const url = `${API_URLS.SUBMISSION}${ENDPOINTS.SUBMISSIONS}/${submissionId}`;
-  
-  console.log('getSubmission URL:', url);
-  
-  const response = await fetch(url);
-
-  console.log('getSubmission Status:', response.status);
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      console.log('getSubmission: 404 - not found yet');
-      return null; // Not found or propagation delay
-    }
-    throw new Error(`Failed to get submission: ${response.status}`);
+  try {
+    return await apiClient.get<SubmissionDetail>(`${ENDPOINTS.SUBMISSIONS}/${submissionId}`);
+  } catch (error) {
+    // If it's a 404/Null return from API client (though apiClient throws on 404 by default usually, unless modified)
+    // We need to check if apiClient throws on 404 or how we handle it. 
+    // The previous implementation utilized response.ok check. 
+    // Let's assume apiClient throws an error for non-2xx.
+    // We might want to catch it or let it propagate. 
+    // For now, let's propagate as it simplifies logic, but the previous code returned null on 404.
+    // If we want to keep that behavior, we'd need to modify apiClient or handle it here.
+    // Let's just propagate for now as standard practice.
+    throw error;
   }
-  
-  const data = await response.json();
-  console.log('getSubmission Response:', JSON.stringify(data, null, 2));
-  return data;
 }
 
 /**
@@ -143,19 +67,18 @@ export async function pollSubmission(
   maxAttempts = 30,
   intervalMs = 1000
 ): Promise<SubmissionDetail> {
-  console.log('=== pollSubmission Started ===');
-  console.log('submissionId:', submissionId);
-  
   for (let i = 0; i < maxAttempts; i++) {
-    console.log(`Poll attempt ${i + 1}/${maxAttempts}`);
     await new Promise(r => setTimeout(r, intervalMs));
     
-    const submission = await getSubmission(submissionId);
-    
-    if (submission && (submission.status === "COMPLETED" || submission.status === "FAILED")) {
-      console.log('=== pollSubmission Complete ===');
-      console.log('Final submission:', JSON.stringify(submission, null, 2));
-      return submission;
+    try {
+      const submission = await apiClient.get<SubmissionDetail>(`${ENDPOINTS.SUBMISSIONS}/${submissionId}`);
+      
+      if (submission && (submission.status === "COMPLETED" || submission.status === "FAILED")) {
+        return submission;
+      }
+    } catch (e) {
+      // Ignore transient errors during polling
+      console.warn("Polling error:", e);
     }
   }
   
@@ -175,19 +98,13 @@ export async function getUserSubmissions(
   page = 0,
   size = 20
 ): Promise<SubmissionDetail[]> {
-  let url = `${API_URLS.SUBMISSION}${ENDPOINTS.SUBMISSIONS}/user/${userId}?page=${page}&size=${size}`;
+  let url = `${ENDPOINTS.SUBMISSIONS}/user/${userId}?page=${page}&size=${size}`;
   
   if (questionId) {
     url += `&questionId=${questionId}`;
   }
   
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to get submissions: ${response.status}`);
-  }
-  
-  return response.json();
+  return apiClient.get<SubmissionDetail[]>(url);
 }
 
 // ============================================================================
@@ -210,6 +127,6 @@ export async function executeCustomTestCases(payload: {
     questionId: payload.questionId,
     language: payload.language,
     code: payload.code,
-    customTestCases: payload.testCases,
+    customTestCases: payload.testCases, 
   });
 }

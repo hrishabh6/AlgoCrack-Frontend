@@ -1,9 +1,7 @@
 // API Configuration
+// API Configuration
 export const API_URLS = {
-  PROBLEM: "http://localhost:8084",
-  SUBMISSION: "http://localhost:8080",
-  EXECUTION: "http://localhost:8081",
-  WEBSOCKET: "http://localhost:8080/ws",
+  GATEWAY: "http://localhost:9090",
 } as const;
 
 // API Endpoints
