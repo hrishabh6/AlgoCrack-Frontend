@@ -19,12 +19,12 @@ interface EditorLayoutProps {
 }
 
 export function EditorLayout({ problem, testCases }: EditorLayoutProps) {
-    const { setProblem, setTestCases } = useEditorStore();
+    const { setProblem, initializeTestcases } = useEditorStore();
 
     useEffect(() => {
         setProblem(problem);
-        setTestCases(testCases);
-    }, [problem, testCases, setProblem, setTestCases]);
+        initializeTestcases(testCases);
+    }, [problem, testCases, setProblem, initializeTestcases]);
 
     return (
         <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden flex flex-col relative">

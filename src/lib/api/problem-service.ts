@@ -76,8 +76,8 @@ export async function getTestCases(questionId: number): Promise<TestCase[]> {
   }
   
   const testCases: TestCase[] = await response.json();
-  // Filter to only show non-hidden test cases
-  return testCases.filter((tc) => !tc.isHidden);
+  // Filter to only show DEFAULT (non-hidden) test cases
+  return testCases.filter((tc) => tc.type === "DEFAULT");
 }
 
 /**

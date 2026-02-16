@@ -7,20 +7,32 @@ import { API_URLS, ENDPOINTS } from "../constants";
  * @returns Promise resolving to the execution result.
  */
 export async function runCode(payload: {
+  questionId: number;
   language: string;
-  source: string;
-  testCases: any[];
+  code: string;
+  customTestCases?: any[];
 }): Promise<any> {
   // Use the standalone CXE service URL
   // Matches ExecutionController @RequestMapping("/api/v1/execution") + @PostMapping("/submit")
   const url = `${API_URLS.EXECUTION}${ENDPOINTS.EXECUTION}/submit`;
   
+  const requestBody: any = {
+    questionId: payload.questionId,
+    language: payload.language,
+    code: payload.code,
+  };
+
+  // Include customTestCases if provided
+  if (payload.customTestCases && payload.customTestCases.length > 0) {
+    requestBody.customTestCases = payload.customTestCases;
+  }
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {

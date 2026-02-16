@@ -111,7 +111,7 @@ export function ProblemDescription() {
                 </TabsContent>
 
                 <TabsContent value="results" className="flex-1 p-0 m-0 h-full">
-                     <SubmissionResult />
+                    <SubmissionResult />
                 </TabsContent>
             </Tabs>
         </div>

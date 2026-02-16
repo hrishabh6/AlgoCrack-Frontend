@@ -1,21 +1,60 @@
+/**
+ * @deprecated This service is deprecated. Use submission-service.ts instead.
+ * The new architecture routes all execution through Submission Service's /run endpoint.
+ * CXE is now an internal backend service not directly accessible from frontend.
+ */
+
 import { API_URLS, ENDPOINTS } from "../constants";
-import type {
-  ExecutionRequest,
-  ExecutionResponse,
-  ExecutionStatusResponse,
-  ExecutionResultsResponse,
-  HealthResponse,
-} from "@/types";
+import type { HealthResponse } from "@/types";
+
+// Legacy types for backward compatibility
+interface LegacyExecutionRequest {
+  submissionId?: string;
+  userId?: number;
+  questionId: number;
+  language: string;
+  code: string;
+  testCases?: Array<{ input: Record<string, unknown> }>;
+}
+
+interface LegacyExecutionResponse {
+  submissionId: string;
+  status: string;
+  message: string;
+}
+
+interface LegacyExecutionStatusResponse {
+  submissionId: string;
+  status: string;
+  verdict?: string;
+  runtimeMs?: number;
+  memoryKb?: number;
+}
+
+interface LegacyExecutionResultsResponse {
+  submissionId: string;
+  status: string;
+  verdict: string;
+  runtimeMs: number;
+  testCaseResults: Array<{
+    index: number;
+    passed: boolean;
+    actualOutput: string;
+    executionTimeMs: number;
+    error: string | null;
+  }>;
+}
 
 const cxeServiceUrl = API_URLS.EXECUTION;
 
 /**
- * Run code against custom test cases (no DB save)
- * This is used for the "Run" button
+ * @deprecated Use submission-service.ts runCode() instead
  */
 export async function runCode(
-  request: ExecutionRequest
-): Promise<ExecutionResponse> {
+  request: LegacyExecutionRequest
+): Promise<LegacyExecutionResponse> {
+  console.warn("cxe-service.runCode is deprecated. Use submission-service.runCode instead.");
+  
   const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/submit`;
   
   const response = await fetch(url, {
@@ -34,11 +73,11 @@ export async function runCode(
 }
 
 /**
- * Poll execution status
+ * @deprecated Direct CXE polling is deprecated
  */
 export async function getExecutionStatus(
   submissionId: string
-): Promise<ExecutionStatusResponse> {
+): Promise<LegacyExecutionStatusResponse> {
   const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/status/${submissionId}`;
   const response = await fetch(url);
   
@@ -50,11 +89,11 @@ export async function getExecutionStatus(
 }
 
 /**
- * Get full execution results
+ * @deprecated Direct CXE results are deprecated
  */
 export async function getExecutionResults(
   submissionId: string
-): Promise<ExecutionResultsResponse> {
+): Promise<LegacyExecutionResultsResponse> {
   const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/results/${submissionId}`;
   const response = await fetch(url);
   
@@ -66,7 +105,7 @@ export async function getExecutionResults(
 }
 
 /**
- * Cancel a queued execution
+ * @deprecated Direct CXE cancellation is deprecated
  */
 export async function cancelExecution(
   submissionId: string
@@ -85,7 +124,7 @@ export async function cancelExecution(
 }
 
 /**
- * Check CXE service health
+ * Check CXE service health (still useful for monitoring)
  */
 export async function getHealth(): Promise<HealthResponse> {
   const url = `${cxeServiceUrl}${ENDPOINTS.EXECUTION}/health`;

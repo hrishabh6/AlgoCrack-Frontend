@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import type {
-  SubmissionStatus,
-  SubmissionVerdict,
-  SubmissionDetail,
-  TestCaseResult,
   ExecutionStatus,
-  ExecutionVerdict,
+  TestCaseResult,
+  SubmitVerdict,
+  RunVerdict,
+  Verdict,
+  SubmissionDetail,
 } from "@/types";
 
 interface SubmissionState {
@@ -15,8 +15,8 @@ interface SubmissionState {
   currentSubmissionId: string | null;
   
   // Submission status
-  submissionStatus: SubmissionStatus | ExecutionStatus | null;
-  verdict: SubmissionVerdict | ExecutionVerdict | null;
+  submissionStatus: ExecutionStatus | null;
+  verdict: Verdict | null;
   
   // Results
   runtimeMs: number | null;
@@ -33,9 +33,9 @@ interface SubmissionState {
   // Actions
   startSubmission: (submissionId: string) => void;
   startRun: (submissionId: string) => void;
-  updateStatus: (status: SubmissionStatus | ExecutionStatus) => void;
+  updateStatus: (status: ExecutionStatus) => void;
   setResults: (results: {
-    verdict: SubmissionVerdict | ExecutionVerdict;
+    verdict: Verdict;
     runtimeMs?: number;
     memoryKb?: number;
     passedTestCases?: number;

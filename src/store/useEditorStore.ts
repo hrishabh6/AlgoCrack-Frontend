@@ -2,82 +2,208 @@ import { create } from "zustand";
 import type {
   QuestionDetail,
   TestCase,
-  ExecutionMetadata,
+  EditableTestCase,
+  QuestionMetadata,
 } from "@/types";
 
 interface EditorState {
   // Current problem
   currentProblem: QuestionDetail | null;
-  currentTestCases: TestCase[];
-  metadata: ExecutionMetadata | null;
+  
+  // Unified testcases - editable DEFAULT testcases + user-added
+  testcases: EditableTestCase[];
+  originalTestcases: EditableTestCase[];  // For reset functionality
   
   // Editor state
   code: string;
   language: string;
+  metadata: QuestionMetadata | null;
   
-  // Custom test cases for "Run" feature
-  customTestCases: Array<{ input: Record<string, unknown> }>;
+  // UI state
   activeTestCaseIndex: number;
   activeTab: "description" | "solutions" | "submissions" | "results";
   
-  // Actions
+  // Actions - Problem
   setProblem: (problem: QuestionDetail) => void;
-  setTestCases: (testCases: TestCase[]) => void;
-  setMetadata: (metadata: ExecutionMetadata) => void;
+  initializeTestcases: (testcases: TestCase[]) => void;
+  
+  // Actions - Code
   setCode: (code: string) => void;
   setLanguage: (language: string) => void;
-  addCustomTestCase: (testCase: { input: Record<string, unknown> }) => void;
-  removeCustomTestCase: (index: number) => void;
-  updateCustomTestCase: (index: number, testCase: { input: Record<string, unknown> }) => void;
+  
+  // Actions - Testcases (unified model)
+  updateTestcaseInput: (index: number, input: string) => void;
+  addTestcase: (input: string) => void;
+  removeTestcase: (index: number) => void;
+  resetTestcase: (index: number) => void;
+  resetAllTestcases: () => void;
+  
+  // Actions - UI
   setActiveTestCaseIndex: (index: number) => void;
   setActiveTab: (tab: "description" | "solutions" | "submissions" | "results") => void;
+  
+  // Get testcases for API call (formatted for /run endpoint)
+  getTestcasesForRun: () => Array<{ input: string }>;
+  
   reset: () => void;
 }
 
 const initialState = {
   currentProblem: null,
-  currentTestCases: [],
-  metadata: null,
+  testcases: [] as EditableTestCase[],
+  originalTestcases: [] as EditableTestCase[],
   code: "",
-  language: "java",
-  customTestCases: [],
+  language: "JAVA",
+  metadata: null,
   activeTestCaseIndex: 0,
-  activeTab: "description" as "description" | "solutions" | "submissions" | "results",
+  activeTab: "description" as const,
 };
 
-export const useEditorStore = create<EditorState>((set) => ({
+export const useEditorStore = create<EditorState>((set, get) => ({
   ...initialState,
   
+  // Set the current problem
+  setProblem: (problem) => {
+    const metadata = problem.metadataList?.[0] ?? null;
+    set({ 
+      currentProblem: problem,
+      metadata,
+      code: metadata?.codeTemplate ?? "",
+      language: metadata?.language ?? "JAVA",
+    });
+  },
+  
+  // Initialize testcases from problem's defaultTestcases
+  // This converts TestCase[] to EditableTestCase[]
+  initializeTestcases: (testcases) => {
+    const editableTestcases: EditableTestCase[] = testcases.map((tc) => ({
+      id: tc.id,
+      input: tc.input,
+      originalInput: tc.input,
+      isModified: false,
+      isUserAdded: false,
+    }));
+    set({
+      testcases: editableTestcases,
+      originalTestcases: editableTestcases,
+      activeTestCaseIndex: 0,
+    });
+  },
+  
+  // Update a testcase input
+  updateTestcaseInput: (index, input) => {
+    set((state) => {
+      const newTestcases = [...state.testcases];
+      const tc = newTestcases[index];
+      if (tc) {
+        const originalInput = state.originalTestcases[index]?.originalInput;
+        newTestcases[index] = {
+          ...tc,
+          input,
+          isModified: !tc.isUserAdded && input !== originalInput,
+        };
+      }
+      return { testcases: newTestcases };
+    });
+  },
+  
+  // Add a new user-defined testcase
+  addTestcase: (input) => {
+    set((state) => ({
+      testcases: [
+        ...state.testcases,
+        {
+          id: null,
+          input,
+          originalInput: undefined,
+          isModified: false,
+          isUserAdded: true,
+        },
+      ],
+      activeTestCaseIndex: state.testcases.length, // Select the new one
+    }));
+  },
+  
+  // Remove a testcase (only user-added ones can be removed)
+  removeTestcase: (index) => {
+    set((state) => {
+      const tc = state.testcases[index];
+      if (!tc?.isUserAdded) {
+        // Can't remove default testcases, but can reset them
+        return state;
+      }
+      const newTestcases = state.testcases.filter((_, i) => i !== index);
+      return {
+        testcases: newTestcases,
+        activeTestCaseIndex: Math.min(state.activeTestCaseIndex, newTestcases.length - 1),
+      };
+    });
+  },
+  
+  // Reset a single testcase to its original value
+  resetTestcase: (index) => {
+    set((state) => {
+      const original = state.originalTestcases[index];
+      if (!original || state.testcases[index]?.isUserAdded) {
+        return state;
+      }
+      const newTestcases = [...state.testcases];
+      newTestcases[index] = { ...original };
+      return { testcases: newTestcases };
+    });
+  },
+  
+  // Reset all testcases to original + remove user-added
+  resetAllTestcases: () => {
+    set((state) => ({
+      testcases: [...state.originalTestcases],
+      activeTestCaseIndex: 0,
+    }));
+  },
+  
+  // Get testcases formatted for the /run API
+  getTestcasesForRun: () => {
+    return get().testcases.map((tc) => ({ input: tc.input }));
+  },
+  
+  // UI actions
   setActiveTab: (tab) => set({ activeTab: tab }),
-  
-  setProblem: (problem) => set({ currentProblem: problem }),
-  
-  setTestCases: (testCases) => set({ currentTestCases: testCases }),
-  
-  setMetadata: (metadata) => set({ metadata }),
-  
-  setCode: (code) => set({ code }),
-  
-  setLanguage: (language) => set({ language }),
-  
-  addCustomTestCase: (testCase) =>
-    set((state) => ({
-      customTestCases: [...state.customTestCases, testCase],
-    })),
-  
-  removeCustomTestCase: (index) =>
-    set((state) => ({
-      customTestCases: state.customTestCases.filter((_, i) => i !== index),
-    })),
-  
-  updateCustomTestCase: (index, testCase) =>
-    set((state) => ({
-      customTestCases: state.customTestCases.map((tc, i) =>
-        i === index ? testCase : tc
-      ),
-    })),
-  
   setActiveTestCaseIndex: (index) => set({ activeTestCaseIndex: index }),
+  setCode: (code) => set({ code }),
+  setLanguage: (language) => set({ language }),
   
   reset: () => set(initialState),
 }));
+
+// ============================================================================
+// Deprecated exports for backward compatibility during migration
+// ============================================================================
+
+/**
+ * @deprecated Use testcases directly from store. This maintains compatibility with old code.
+ */
+export const useEditorStoreCompat = () => {
+  const store = useEditorStore();
+  
+  return {
+    ...store,
+    // Legacy aliases
+    currentTestCases: store.testcases.map((tc) => ({
+      id: tc.id ?? 0,
+      questionId: store.currentProblem?.id ?? 0,
+      input: tc.input,
+      type: "DEFAULT" as const,
+    })),
+    customTestCases: store.testcases
+      .filter((tc) => tc.isUserAdded || tc.isModified)
+      .map((tc) => ({ input: JSON.parse(tc.input) })),
+    setTestCases: store.initializeTestcases,
+    addCustomTestCase: (tc: { input: Record<string, unknown> }) => 
+      store.addTestcase(JSON.stringify(tc.input)),
+    removeCustomTestCase: store.removeTestcase,
+    updateCustomTestCase: (index: number, tc: { input: Record<string, unknown> }) =>
+      store.updateTestcaseInput(index, JSON.stringify(tc.input)),
+    activeTestCaseTab: "cases" as "cases" | "custom",
+    setActiveTestCaseTab: () => {}, // No-op, we don't have tabs anymore
+  };
+};
