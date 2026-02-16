@@ -66,8 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("token");
         setToken(null);
         setUser(null);
-        router.push("/auth/signin");
-    }, [router]);
+        // router.push("/auth/signin"); // User requested no redirect on logout
+    }, []);
 
     return (
         <AuthContext.Provider

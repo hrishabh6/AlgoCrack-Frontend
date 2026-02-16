@@ -138,7 +138,7 @@ function SignupContent() {
                 <CardFooter className="flex justify-center">
                     <p className="text-sm text-muted-foreground">
                         Already have an account?{" "}
-                        <Link href="/auth/signin" className="text-primary hover:underline">
+                        <Link href={`/auth/signin?next=${encodeURIComponent(next)}`} className="text-primary hover:underline">
                             Sign in
                         </Link>
                     </p>

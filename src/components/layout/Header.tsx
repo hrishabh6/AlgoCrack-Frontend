@@ -123,7 +123,7 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <Button asChild variant="default" size="sm">
-              <Link href="/auth/signin">Sign In</Link>
+              <Link href={`/auth/signin?next=${encodeURIComponent(pathname)}`}>Sign In</Link>
             </Button>
           )}
         </div>

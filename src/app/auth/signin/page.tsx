@@ -137,7 +137,7 @@ function SignInContent() {
                         Don't have an account?{" "}
                         {/* For MVP we might not have a separate signup page or reuse signin for auto-provisioning if supported, 
                 but let's assume standard signup flow or just direct them to signin for now */}
-                        <Link href="/auth/signup" className="text-primary hover:underline">
+                        <Link href={`/auth/signup?next=${encodeURIComponent(next)}`} className="text-primary hover:underline">
                             Sign up
                         </Link>
                     </p>
