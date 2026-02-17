@@ -1,9 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Code2, Github, Twitter } from "lucide-react";
 
 export function Footer() {
-    return (
-        <footer className="border-t border-border/40 bg-background">
+  const pathname = usePathname();
+
+  // Hide footer on problem pages where the editor takes full height
+  if (pathname.startsWith("/problems/") && pathname.split("/").length > 2) {
+    return null;
+  }
+
+  return (
+    <footer className="border-t border-border/40 bg-background">
       <div className="flex flex-col items-center justify-between gap-4 py-6 md:h-16 md:flex-row md:py-0 w-full px-4">
         {/* Footer content */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -26,6 +36,7 @@ export function Footer() {
           </Link>
         </div>
       </div>
-        </footer>
-    );
+    </footer>
+  );
 }
+
