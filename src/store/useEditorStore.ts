@@ -5,6 +5,7 @@ import type {
   EditableTestCase,
   QuestionMetadata,
 } from "@/types";
+import { useUserStore } from "./useUserStore";
 
 interface EditorState {
   // Current problem
@@ -18,6 +19,7 @@ interface EditorState {
   code: string;
   language: string;
   metadata: QuestionMetadata | null;
+  editorRef: any | null;
   
   // UI state
   activeTestCaseIndex: number;
@@ -30,6 +32,7 @@ interface EditorState {
   // Actions - Code
   setCode: (code: string) => void;
   setLanguage: (language: string) => void;
+  setEditorRef: (editor: any) => void;
   
   // Actions - Testcases (unified model)
   updateTestcaseInput: (index: number, input: string) => void;
@@ -53,8 +56,9 @@ const initialState = {
   testcases: [] as EditableTestCase[],
   originalTestcases: [] as EditableTestCase[],
   code: "",
-  language: "JAVA",
+  language: "java",
   metadata: null,
+  editorRef: null,
   activeTestCaseIndex: 0,
   activeTab: "description" as const,
 };
@@ -65,11 +69,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   // Set the current problem
   setProblem: (problem) => {
     const metadata = problem.metadataList?.[0] ?? null;
+    const lang = (metadata?.language ?? "java").toLowerCase();
+    
+    // Try to load saved code
+    const userId = useUserStore.getState().userId;
+    const key = `algocrack_code_${userId || 'guest'}_${problem.id}_${lang}`;
+    let initialCode = metadata?.codeTemplate ?? "";
+    
+    if (typeof window !== 'undefined') {
+        const savedCode = localStorage.getItem(key);
+        if (savedCode) {
+            initialCode = savedCode;
+        }
+    }
+
     set({ 
       currentProblem: problem,
       metadata,
-      code: metadata?.codeTemplate ?? "",
-      language: metadata?.language ?? "JAVA",
+      code: initialCode,
+      language: lang,
     });
   },
   
@@ -169,8 +187,48 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   // UI actions
   setActiveTab: (tab) => set({ activeTab: tab }),
   setActiveTestCaseIndex: (index) => set({ activeTestCaseIndex: index }),
-  setCode: (code) => set({ code }),
-  setLanguage: (language) => set({ language }),
+  // Actions - Code
+  setCode: (code) => {
+    set({ code });
+    // Save to local storage
+    const state = get();
+    const { currentProblem, language } = state;
+    const userId = useUserStore.getState().userId; // Access directly to avoid circular dependency issues if any
+    
+    if (currentProblem && language) {
+       const key = `algocrack_code_${userId || 'guest'}_${currentProblem.id}_${language}`;
+       localStorage.setItem(key, code);
+    }
+  },
+
+  setLanguage: (language) => {
+     // When switching language:
+     // 1. Save current code? (Already saved via setCode)
+     // 2. Load code for new language
+     const state = get();
+     const { currentProblem } = state;
+     const userId = useUserStore.getState().userId;
+     const newLang = language.toLowerCase();
+     
+     if (!currentProblem) {
+         set({ language: newLang });
+         return;
+     }
+
+     const key = `algocrack_code_${userId || 'guest'}_${currentProblem.id}_${newLang}`;
+     const savedCode = localStorage.getItem(key);
+     
+     if (savedCode) {
+         set({ language: newLang, code: savedCode });
+     } else {
+         // Find template for this language
+         const metadata = currentProblem.metadataList.find(
+             (m) => m.language.toLowerCase() === newLang
+         );
+         set({ language: newLang, code: metadata?.codeTemplate ?? "" });
+     }
+  },
+  setEditorRef: (editorRef) => set({ editorRef }),
   
   reset: () => set(initialState),
 }));

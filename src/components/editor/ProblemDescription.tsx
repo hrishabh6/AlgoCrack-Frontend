@@ -70,7 +70,7 @@ export function ProblemDescription() {
 
                 <TabsContent value="description" className="flex-1 p-0 m-0 h-full">
                     <ScrollArea className="h-full">
-                        <div className="p-4 space-y-6">
+                        <div className="p-4 space-y-6 pb-24">
                             {/* Title & difficulty */}
                             <div>
                                 <h1 className="text-2xl font-bold">{currentProblem.questionTitle}</h1>
@@ -111,19 +111,19 @@ export function ProblemDescription() {
                                             <div className="space-y-2 text-sm">
                                                 {example.inputText && (
                                                     <div className="flex gap-2">
-                                                        <span className="font-semibold min-w-16">Input:</span>
+                                                        <span className="font-semibold min-w-24">Input:</span>
                                                         <code className="bg-muted px-1 py-0.5 rounded font-mono text-xs">{example.inputText}</code>
                                                     </div>
                                                 )}
                                                 {example.outputText && (
                                                     <div className="flex gap-2">
-                                                        <span className="font-semibold min-w-16">Output:</span>
+                                                        <span className="font-semibold min-w-24">Output:</span>
                                                         <code className="bg-muted px-1 py-0.5 rounded font-mono text-xs">{example.outputText}</code>
                                                     </div>
                                                 )}
                                                 {example.explanation && (
                                                     <div className="flex gap-2">
-                                                        <span className="font-semibold min-w-16">Explanation:</span>
+                                                        <span className="font-semibold min-w-24">Explanation:</span>
                                                         <span className="text-muted-foreground">{example.explanation}</span>
                                                     </div>
                                                 )}

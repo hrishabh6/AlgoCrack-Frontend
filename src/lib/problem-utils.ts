@@ -81,9 +81,9 @@ export function parseProblemDescription(content: string): ProblemContent {
     const outputMatch = part.match(/(?:\*\*|__)?Output:(?:\*\*|__)?\s*([\s\S]*?)(?=(?:\*\*|__)?Explanation:(?:\*\*|__)?|$)/i);
     const explanationMatch = part.match(/(?:\*\*|__)?Explanation:(?:\*\*|__)?\s*([\s\S]*?)(?=$)/i);
 
-    if (inputMatch) inputText = inputMatch[1].trim();
-    if (outputMatch) outputText = outputMatch[1].trim();
-    if (explanationMatch) explanation = explanationMatch[1].trim();
+    if (inputMatch) inputText = inputMatch[1].replace(/```\s*$/, "").trim();
+    if (outputMatch) outputText = outputMatch[1].replace(/```\s*$/, "").trim();
+    if (explanationMatch) explanation = explanationMatch[1].replace(/```\s*$/, "").trim();
 
     // Fallback if structured parsing fails (e.g. compact format)
     // If we couldn't extract structure, we might just put the whole raw text in explanation or input?

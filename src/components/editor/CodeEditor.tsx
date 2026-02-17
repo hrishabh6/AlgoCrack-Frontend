@@ -6,7 +6,7 @@ import { useEditorStore, useUserStore } from "@/store";
 import { Loader2 } from "lucide-react";
 
 export function CodeEditor() {
-  const { code, language, setCode } = useEditorStore();
+  const { code, language, setCode, setEditorRef } = useEditorStore();
   const { theme } = useUserStore();
   // Removed mounted state and effect; editor renders directly
   const monaco = useMonaco();
@@ -29,6 +29,7 @@ export function CodeEditor() {
         language={language.toLowerCase()}
         value={code}
         onChange={(value) => setCode(value || "")}
+        onMount={(editor) => setEditorRef(editor)}
         theme={theme === "dark" ? "vs-dark" : "light"}
         options={{
           minimap: { enabled: false },
@@ -39,6 +40,8 @@ export function CodeEditor() {
           readOnly: false,
           automaticLayout: true,
           padding: { top: 16, bottom: 16 },
+          formatOnType: true,
+          formatOnPaste: true,
         }}
       />
     </div>
