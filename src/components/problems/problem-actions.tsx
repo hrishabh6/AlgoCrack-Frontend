@@ -96,7 +96,7 @@ export function ProblemActions() {
             startSubmission(tempSubmissionId);
 
             const payload = {
-                userId: user?.userId ? Number(user.userId) : 0, // 0 or throw error if not found
+                userId: user?.userId || "",
                 questionId: currentProblem.id,
                 language,
                 code,

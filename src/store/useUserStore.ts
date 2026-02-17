@@ -20,9 +20,9 @@ interface UserState {
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      // Default user for development (will be replaced with auth)
-      userId: 1,
-      username: "dev_user",
+      // User info — populated after login via AuthContext
+      userId: null,
+      username: null,
       
       theme: "dark",
       editorFontSize: 14,

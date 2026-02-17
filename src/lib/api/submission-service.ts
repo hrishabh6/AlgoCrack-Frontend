@@ -93,7 +93,7 @@ export async function pollSubmission(
  * Get user's submission history for a question.
  */
 export async function getUserSubmissions(
-  userId: number,
+  userId: string,
   questionId?: number,
   page = 0,
   size = 20

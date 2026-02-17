@@ -48,6 +48,8 @@ export function TestCasesPanel() {
     useEffect(() => {
         if (verdict) {
             setActiveTab("result");
+        } else {
+            setActiveTab("cases");
         }
     }, [verdict]);
 

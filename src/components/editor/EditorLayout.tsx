@@ -9,7 +9,7 @@ import { ProblemDescription } from "./ProblemDescription";
 import { CodeEditor } from "./CodeEditor";
 import { TestCasesPanel } from "./TestCasesPanel";
 import { EditorToolbar } from "./EditorToolbar";
-import { useEditorStore } from "@/store";
+import { useEditorStore, useSubmissionStore } from "@/store";
 import { QuestionDetail, TestCase } from "@/types";
 import { useEffect } from "react";
 
@@ -20,11 +20,13 @@ interface EditorLayoutProps {
 
 export function EditorLayout({ problem, testCases }: EditorLayoutProps) {
     const { setProblem, initializeTestcases } = useEditorStore();
+    const { reset: resetSubmission } = useSubmissionStore();
 
     useEffect(() => {
         setProblem(problem);
         initializeTestcases(testCases);
-    }, [problem, testCases, setProblem, initializeTestcases]);
+        resetSubmission();
+    }, [problem, testCases, setProblem, initializeTestcases, resetSubmission]);
 
     return (
         <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden flex flex-col relative">

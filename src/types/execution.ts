@@ -83,7 +83,7 @@ export interface RunRequest {
  * Backend uses HIDDEN testcases from DB.
  */
 export interface SubmitRequest {
-  userId: number;
+  userId: string;
   questionId: number;
   language: string;
   code: string;
@@ -139,7 +139,7 @@ export interface SubmitResponse {
  */
 export interface SubmissionDetail {
   submissionId: string;
-  userId: number;
+  userId: string;
   questionId: number;
   language: string;
   code: string;
