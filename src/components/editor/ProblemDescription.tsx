@@ -1,6 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SubmissionsList } from "./SubmissionsList";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useEditorStore } from "@/store";
@@ -169,10 +170,8 @@ export function ProblemDescription() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="submissions" className="flex-1 p-4 m-0">
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                        <p>No submissions yet.</p>
-                    </div>
+                <TabsContent value="submissions" className="flex-1 p-0 m-0 h-full">
+                    <SubmissionsList />
                 </TabsContent>
 
                 <TabsContent value="results" className="flex-1 p-0 m-0 h-full">

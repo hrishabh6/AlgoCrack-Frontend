@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
 import { API_URLS } from "@/lib/constants";
+import { useUserStore } from "@/store";
 
 interface User {
     userId: string;
@@ -42,6 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 } else {
                     setToken(storedToken);
                     setUser(decoded);
+                    // Sync with global store
+                    useUserStore.getState().setUser(decoded.userId, decoded.sub || "");
                 }
             } catch (e) {
                 console.error("Invalid token:", e);
@@ -57,6 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const decoded = parseJwt(newToken);
             setUser(decoded);
+            // Sync with global store
+            useUserStore.getState().setUser(decoded.userId, decoded.sub || "");
         } catch (e) {
             console.error("Failed to decode token during login:", e);
         }
@@ -66,6 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("token");
         setToken(null);
         setUser(null);
+        // Sync with global store
+        useUserStore.getState().logout();
         // router.push("/auth/signin"); // User requested no redirect on logout
     }, []);
 

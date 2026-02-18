@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 
 interface UserState {
   // User info (simplified for now, will integrate with auth later)
-  userId: number | null;
+  userId: string | number | null;
   username: string | null;
   
   // Preferences
@@ -11,7 +11,7 @@ interface UserState {
   editorFontSize: number;
   
   // Actions
-  setUser: (userId: number, username: string) => void;
+  setUser: (userId: string | number, username: string) => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
   setEditorFontSize: (size: number) => void;
   logout: () => void;

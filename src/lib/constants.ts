@@ -17,6 +17,10 @@ export const ENDPOINTS = {
   
   // CXE Service
   EXECUTION: "/api/v1/execution",
+  
+  // User Profile
+  USER_PROFILE: "/api/v1/user/profile",
+  USER_HEATMAP: "/api/v1/user/heatmap",
 } as const;
 
 // Difficulty colors
