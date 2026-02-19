@@ -13,7 +13,7 @@ interface ContributionHeatmapProps {
 
 // ─── Color Buckets ──────────────────────────────────────────────
 const LEVELS = [
-    "#161b22",
+    "#2d333b",
     "#0e4429",
     "#006d32",
     "#26a641",
@@ -251,48 +251,48 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
 
     if (loading || !data) {
         return (
-            <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="h-5 w-64 bg-muted/30 rounded animate-pulse" />
+            <div className="rounded-lg border border-border bg-card p-4 shadow-sm min-h-[120px]">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="h-5 w-48 bg-muted/30 rounded animate-pulse" />
                     <div className="h-8 w-24 bg-muted/30 rounded animate-pulse" />
                 </div>
-                <div className="h-[130px] w-full bg-muted/10 rounded animate-pulse" />
+                <div className="h-[100px] w-full bg-muted/10 rounded animate-pulse" />
             </div>
         );
     }
 
     return (
-        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-lg">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
             {/* ── Stats Row ──────────────────────────────────── */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-2 text-sm">
-                    <span className="text-2xl font-extrabold text-foreground tracking-tight">
+                    <span className="text-lg font-semibold text-foreground tracking-tight">
                         {data.totalSubmissions}
                     </span>
-                    <span className="text-muted-foreground">
-                        submissions in {selectedYear ?? "the past one year"}
+                    <span className="text-muted-foreground text-xs">
+                        submissions in {selectedYear ?? "the past year"}
                     </span>
                 </div>
-                <div className="flex items-center gap-5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>
                         Total active days:{" "}
-                        <span className="font-bold text-foreground">{data.totalActiveDays}</span>
+                        <span className="font-medium text-foreground">{data.totalActiveDays}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                        <Flame className="h-3.5 w-3.5 text-orange-500" />
+                        <Flame className="h-3 w-3 text-orange-500" />
                         Max streak:{" "}
-                        <span className="font-bold text-foreground">{maxStreak}</span>
+                        <span className="font-medium text-foreground">{maxStreak}</span>
                     </span>
                     <div className="relative">
                         <button
                             onClick={() => setDropdownOpen(!dropdownOpen)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-background/60 hover:bg-muted/50 transition-colors text-foreground text-xs font-medium"
+                            className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-background hover:bg-muted/50 transition-colors text-foreground text-[10px] font-medium"
                         >
                             {selectedYear ?? "Current"}
-                            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+                            <ChevronDown className={`h-3 w-3 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
                         </button>
                         {dropdownOpen && (
-                            <div className="absolute right-0 top-full mt-1 min-w-[100px] bg-card border border-border rounded-lg shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="absolute right-0 top-full mt-1 min-w-[100px] bg-card border border-border rounded-md shadow-lg z-50 py-1">
                                 {yearOptions.map((y) => (
                                     <button
                                         key={y ?? "current"}
@@ -309,7 +309,7 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
             </div>
 
             {/* ── Grid Container ─────────────────────────────── */}
-            <div ref={wrapperRef} className="w-full relative overflow-hidden min-h-[140px]">
+            <div ref={wrapperRef} className="w-full relative overflow-hidden min-h-[120px]">
                 
                 {/* Debug Overlay */}
                 {containerWidth > 0 && weeks.length === 0 && (
@@ -320,7 +320,7 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
 
                 {/* Grid */}
                 {containerWidth > 0 && (
-                    <div className="relative pt-2" style={{ width: totalGridWidth, height: gridHeight + 8, contain: "layout paint" }}>
+                    <div className="relative pt-1" style={{ width: totalGridWidth, height: gridHeight + 8, contain: "layout paint" }}>
                         {weeks.map((week, colIdx) => (
                             <div
                                 key={colIdx}
@@ -358,11 +358,11 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
 
                 {/* Month labels BELOW grid */}
                 {containerWidth > 0 && (
-                    <div className="relative mt-2" style={{ width: totalGridWidth, height: 16 }}>
+                    <div className="relative mt-1" style={{ width: totalGridWidth, height: 16 }}>
                         {monthLabels.map((m, i) => (
                             <span
                                 key={i}
-                                className="absolute text-[10px] text-muted-foreground select-none"
+                                className="absolute text-[9px] text-muted-foreground select-none"
                                 style={{ left: m.x }}
                             >
                                 {m.label}
@@ -373,10 +373,10 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-end gap-1.5 mt-3 text-[10px] text-muted-foreground">
+            <div className="flex items-center justify-end gap-1 mt-2 text-[9px] text-muted-foreground">
                 <span>Less</span>
                 {LEVELS.map((color, i) => (
-                    <div key={i} style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: color }} />
+                    <div key={i} style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: color }} />
                 ))}
                 <span>More</span>
             </div>
@@ -384,7 +384,7 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
             {/* Tooltip (Fixed with Portal) */}
             {tooltip && createPortal(
                 <div
-                    className="fixed pointer-events-none z-[9999] px-3 py-2 rounded-lg bg-[#1c2128] border border-border text-xs text-foreground shadow-xl whitespace-nowrap animate-in fade-in duration-100"
+                    className="fixed pointer-events-none z-[9999] px-2 py-1.5 rounded bg-popover border border-border text-xs text-popover-foreground shadow-md whitespace-nowrap"
                     style={{
                         left: tooltip.x,
                         top: tooltip.y,
@@ -393,12 +393,12 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
                             : "translate(-50%, -100%)",
                     }}
                 >
-                    <span className="font-semibold">
+                    <span className="font-medium">
                         {tooltip.count === 0
                             ? "No submissions"
                             : `${tooltip.count} submission${tooltip.count > 1 ? "s" : ""}`}
                     </span>{" "}
-                    on {formatTooltipDate(tooltip.date)}
+                    <span className="text-muted-foreground">on {formatTooltipDate(tooltip.date)}</span>
                 </div>,
                 document.body
             )}

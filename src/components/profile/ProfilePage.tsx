@@ -82,18 +82,12 @@ export function ProfilePage() {
     }
 
     return (
-        <div className="min-h-screen w-full relative">
-            {/* Ambient Background Effects */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2" />
-                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px] translate-y-1/2" />
-            </div>
-
-            <div className="w-full max-w-7xl mx-auto px-4 py-8 relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8">
+        <div className="w-full bg-background">
+            <div className="w-full max-w-[1200px] mx-auto px-4 py-4">
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
                     {/* Left Sidebar */}
-                    <aside className="lg:sticky lg:top-24 lg:self-start space-y-6">
-                        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-sm">
+                    <aside className="lg:sticky lg:top-24 lg:self-start space-y-4">
+                        <div className="rounded-lg border border-border bg-card shadow-sm">
                             <UserCard
                                 user={profile.userDetails}
                                 languageStats={profile.languageStats}
@@ -102,7 +96,7 @@ export function ProfilePage() {
                     </aside>
 
                     {/* Main Content */}
-                    <div className="space-y-8">
+                    <div className="space-y-4">
                         {/* Stats */}
                         <section>
                             <StatsCard stats={profile.userStats} />

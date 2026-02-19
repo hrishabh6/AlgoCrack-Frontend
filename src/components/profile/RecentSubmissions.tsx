@@ -29,78 +29,61 @@ export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
     }
 
     return (
-        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-xl overflow-hidden shadow-lg flex flex-col relative group">
+        <div className="rounded-lg border border-border bg-card shadow-sm flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-border/50 flex items-center justify-between bg-muted/20">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                    <span className="w-1 h-6 bg-primary rounded-full" />
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     Recent Submissions
                 </h2>
-                <div className="text-xs font-mono text-muted-foreground bg-background/50 px-2 py-1 rounded-md border border-border/50">
-                    Last {submissions.length} activities
-                </div>
+                <Link 
+                    href="/submissions" 
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                >
+                    View All <ArrowRight className="h-3 w-3" />
+                </Link>
             </div>
 
             {/* List */}
-            <div className="divide-y divide-border/50">
-                {submissions.map((sub, index) => {
+            <div className="divide-y divide-border/40">
+                {submissions.map((sub) => {
                     const isAccepted = sub.verdict === "ACCEPTED";
                     const timeAgo = getRelativeTime(sub.timestamp);
                     return (
                         <div
                             key={sub.submissionId}
-                            className="group/row relative flex items-center justify-between p-4 hover:bg-muted/30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-                            style={{ animationDelay: `${index * 50}ms` }}
+                            className="flex items-center justify-between p-3 hover:bg-muted/30 transition-colors group"
                         >
-                             {/* Hover Highlight Line */}
-                            <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${isAccepted ? 'bg-green-500/0 group-hover/row:bg-green-500' : 'bg-red-500/0 group-hover/row:bg-red-500'}`} />
-
-                            <div className="flex items-center gap-4 min-w-0 pl-2">
+                            <div className="flex items-center gap-3 min-w-0">
                                 {/* Status Icon */}
-                                <div className={`shrink-0 p-2 rounded-full ${isAccepted ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                <div className={`shrink-0`}>
                                     {isAccepted ? (
-                                        <CheckCircle2 className="h-5 w-5" />
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
                                     ) : (
-                                        <XCircle className="h-5 w-5" />
+                                        <XCircle className="h-4 w-4 text-red-500" />
                                     )}
                                 </div>
 
                                 {/* Problem Info */}
-                                <div className="space-y-1 min-w-0">
+                                <div className="space-y-0.5 min-w-0">
                                     <Link
                                         href={`/problems/${sub.questionSlug || sub.questionTitle.toLowerCase().replace(/\s+/g, '-')}`}
-                                        className="text-base font-semibold truncate hover:text-primary transition-colors block"
+                                        className="text-sm font-medium truncate hover:text-primary transition-colors block leading-none"
                                     >
                                         {sub.questionTitle}
                                     </Link>
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <span className={`font-mono px-1.5 py-0.5 rounded ${isAccepted ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                        <span className="font-mono">
                                             {formatVerdict(sub.verdict)}
                                         </span>
                                         <span>•</span>
-                                        <span className="flex items-center gap-1">
-                                            <Clock className="h-3 w-3" />
-                                            {timeAgo}
-                                        </span>
+                                        <span>{timeAgo}</span>
                                     </div>
                                 </div>
                             </div>
-
-                            <Link
-                                href={`/problems/${sub.questionSlug || sub.questionTitle.toLowerCase().replace(/\s+/g, '-')}`}
-                                className="opacity-0 group-hover/row:opacity-100 transition-opacity p-2 text-muted-foreground hover:text-primary"
-                            >
-                                <ArrowRight className="h-4 w-4" />
-                            </Link>
                         </div>
                     );
                 })}
             </div>
-
-            {/* View All Button */}
-            <button className="p-4 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-muted/30 transition-colors text-center border-t border-border/50 uppercase tracking-widest">
-                View All Submissions
-            </button>
         </div>
     );
 }
