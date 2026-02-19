@@ -6,160 +6,161 @@ interface StatsCardProps {
     stats: UserStats;
 }
 
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+    const rad = (angleDeg - 90) * (Math.PI / 180);
+    return {
+        x: cx + r * Math.cos(rad),
+        y: cy + r * Math.sin(rad),
+    };
+}
+
+function arcPath(cx: number, cy: number, r: number, startDeg: number, endDeg: number): string {
+    // Clamp to avoid degenerate arcs
+    const span = endDeg - startDeg;
+    if (span <= 0) return "";
+    const start = polarToCartesian(cx, cy, r, startDeg);
+    const end   = polarToCartesian(cx, cy, r, endDeg);
+    const large = span > 180 ? 1 : 0;
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} 1 ${end.x} ${end.y}`;
+}
+
 export function StatsCard({ stats }: StatsCardProps) {
-    const { totalSolved, totalQuestions, easySolved, easyTotal, mediumSolved, mediumTotal, hardSolved, hardTotal } = stats;
+    const {
+        totalSolved, totalQuestions,
+        easySolved,   easyTotal,
+        mediumSolved, mediumTotal,
+        hardSolved,   hardTotal,
+    } = stats;
 
-    const size = 120;
-    const strokeWidth = 5;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
+    // ── Ring geometry ────────────────────────────────────────────────
+    const SIZE = 160;
+    const SW   = 7;            // thin = premium
+    const CX   = SIZE / 2;
+    const CY   = SIZE / 2;
+    const R    = (SIZE - SW) / 2 - 2;  // slightly larger radius to compensate thinner stroke
 
-    const easyPercent = totalQuestions > 0 ? (easySolved / totalQuestions) * 100 : 0;
-    const mediumPercent = totalQuestions > 0 ? (mediumSolved / totalQuestions) * 100 : 0;
-    const hardPercent = totalQuestions > 0 ? (hardSolved / totalQuestions) * 100 : 0;
+    // Total ring span: 285° — generous open gap at bottom for breathing room
+    const RING_SPAN  = 285;
+    const RING_START = -140;   // slightly shifted up, gap centered lower
 
-    const easyDash = (easyPercent / 100) * circumference;
-    const mediumDash = (mediumPercent / 100) * circumference;
-    const hardDash = (hardPercent / 100) * circumference;
+    // Gap BETWEEN the three difficulty track sections
+    // Larger gap needed because round linecaps visually eat into the gap
+    const GAP = 10; // degrees
 
-    const easyOffset = 0;
-    const mediumOffset = -(easyDash);
-    const hardOffset = -(easyDash + mediumDash);
+    // Each difficulty gets an EQUAL fixed container arc — never shrinks
+    // The fill inside each container is what's dynamic
+    const SEGMENT = (RING_SPAN - GAP * 2) / 3;
+
+    const easyTrackDeg   = SEGMENT;
+    const mediumTrackDeg = SEGMENT;
+    const hardTrackDeg   = SEGMENT;
+
+    // Platform-level totals (global capacity — NOT user dependent)
+    // These ensure tracks always have meaningful fill ratios even if backend returns 0
+    const PLATFORM_EASY   = easyTotal   > 0 ? easyTotal   : 927;
+    const PLATFORM_MEDIUM = mediumTotal > 0 ? mediumTotal : 2010;
+    const PLATFORM_HARD   = hardTotal   > 0 ? hardTotal   : 909;
+
+    // Filled (bright) arc = proportion of solved within that fixed container
+    const easyFillDeg   = (easySolved   / PLATFORM_EASY)   * SEGMENT;
+    const mediumFillDeg = (mediumSolved / PLATFORM_MEDIUM) * SEGMENT;
+    const hardFillDeg   = (hardSolved   / PLATFORM_HARD)   * SEGMENT;
+
+    // Colors — bright saturated fill + very muted dark track (almost blends into background)
+    const EASY_FILL    = "#00b8a3";   const EASY_TRACK   = "#0f2522";
+    const MEDIUM_FILL  = "#ffc01e";   const MEDIUM_TRACK = "#2b2107";
+    const HARD_FILL    = "#ef4743";   const HARD_TRACK   = "#2b1212";
+
+    // Place the three track sections sequentially with GAP between them
+    const easyTrackStart   = RING_START;
+    const easyTrackEnd     = easyTrackStart + easyTrackDeg;
+
+    const mediumTrackStart = easyTrackEnd + GAP;
+    const mediumTrackEnd   = mediumTrackStart + mediumTrackDeg;
+
+    const hardTrackStart   = mediumTrackEnd + GAP;
+    const hardTrackEnd     = hardTrackStart + hardTrackDeg;
+
+    // Tracks ALWAYS render — they represent capacity, not solved count
+    const easyTrackPath   = arcPath(CX, CY, R, easyTrackStart,   easyTrackEnd);
+    const mediumTrackPath = arcPath(CX, CY, R, mediumTrackStart, mediumTrackEnd);
+    const hardTrackPath   = arcPath(CX, CY, R, hardTrackStart,   hardTrackEnd);
+
+    // Bright fill paths — only render if something is solved
+    const easyFillPath   = easyFillDeg   > 0.5 ? arcPath(CX, CY, R, easyTrackStart,   easyTrackStart   + easyFillDeg)   : "";
+    const mediumFillPath = mediumFillDeg > 0.5 ? arcPath(CX, CY, R, mediumTrackStart, mediumTrackStart + mediumFillDeg) : "";
+    const hardFillPath   = hardFillDeg   > 0.5 ? arcPath(CX, CY, R, hardTrackStart,   hardTrackStart   + hardFillDeg)   : "";
+
+    const safeTotal = totalQuestions > 0 ? totalQuestions : 1;
 
     return (
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
-            <h2 className="text-sm font-semibold mb-4 text-muted-foreground">Solved Problems</h2>
+        <div className="rounded-xl border border-white/5 bg-card p-4 shadow-none">
+            <div className="grid grid-cols-[180px_1fr] gap-6 items-center">
 
-            <div className="grid grid-cols-[120px_1fr] gap-8 items-center">
-                {/* Donut Chart */}
-                <div className="relative w-[120px] h-[120px]">
-                    <svg
-                        width={size}
-                        height={size}
-                        viewBox={`0 0 ${size} ${size}`}
-                        className="-rotate-90"
-                    >
-                        {/* Background circle */}
-                        <circle
-                            cx={size / 2}
-                            cy={size / 2}
-                            r={radius}
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={strokeWidth}
-                            className="text-muted-foreground/20"
-                        />
+                {/* ── Ring ── */}
+                <div className="relative w-[160px] h-[160px] mx-auto">
+                    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} overflow="visible">
 
-                        {/* Segments */}
-                        {easySolved > 0 && (
-                            <circle
-                                cx={size / 2}
-                                cy={size / 2}
-                                r={radius}
-                                fill="none"
-                                stroke="#22c55e"
-                                strokeWidth={strokeWidth}
-                                strokeDasharray={`${easyDash} ${circumference - easyDash}`}
-                                strokeDashoffset={easyOffset}
-                                strokeLinecap="round"
-                            />
+                        {/* ── EASY: dim track then bright fill ── */}
+                        {easyTrackPath && (
+                            <path d={easyTrackPath}   fill="none" stroke={EASY_TRACK}   strokeWidth={SW} strokeLinecap="round" />
                         )}
-                        {mediumSolved > 0 && (
-                            <circle
-                                cx={size / 2}
-                                cy={size / 2}
-                                r={radius}
-                                fill="none"
-                                stroke="#eab308"
-                                strokeWidth={strokeWidth}
-                                strokeDasharray={`${mediumDash} ${circumference - mediumDash}`}
-                                strokeDashoffset={mediumOffset}
-                                strokeLinecap="round"
-                            />
+                        {easyFillPath && (
+                            <path d={easyFillPath}    fill="none" stroke={EASY_FILL}    strokeWidth={SW + 0.5} strokeLinecap="round" />
                         )}
-                        {hardSolved > 0 && (
-                            <circle
-                                cx={size / 2}
-                                cy={size / 2}
-                                r={radius}
-                                fill="none"
-                                stroke="#ef4444"
-                                strokeWidth={strokeWidth}
-                                strokeDasharray={`${hardDash} ${circumference - hardDash}`}
-                                strokeDashoffset={hardOffset}
-                                strokeLinecap="round"
-                            />
+
+                        {/* ── MEDIUM: dim track then bright fill ── */}
+                        {mediumTrackPath && (
+                            <path d={mediumTrackPath} fill="none" stroke={MEDIUM_TRACK} strokeWidth={SW} strokeLinecap="round" />
+                        )}
+                        {mediumFillPath && (
+                            <path d={mediumFillPath}  fill="none" stroke={MEDIUM_FILL}  strokeWidth={SW + 0.5} strokeLinecap="round" />
+                        )}
+
+                        {/* ── HARD: dim track then bright fill ── */}
+                        {hardTrackPath && (
+                            <path d={hardTrackPath}   fill="none" stroke={HARD_TRACK}   strokeWidth={SW} strokeLinecap="round" />
+                        )}
+                        {hardFillPath && (
+                            <path d={hardFillPath}    fill="none" stroke={HARD_FILL}    strokeWidth={SW + 0.5} strokeLinecap="round" />
                         )}
                     </svg>
 
                     {/* Center text */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-2xl font-bold text-foreground">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
+                        <div className="text-2xl font-medium text-foreground tracking-tight flex items-baseline gap-1">
                             {totalSolved}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground uppercase">
-                            Solved
-                        </span>
+                            <span className="text-xs text-muted-foreground/60 font-medium">/{safeTotal}</span>
+                        </div>
+                        <div className="text-[13px] font-medium text-muted-foreground mt-0.5">Solved</div>
                     </div>
                 </div>
 
-                {/* Difficulty Breakdown */}
-                <div className="space-y-4 w-full">
-                    <DifficultyRow
-                        label="Easy"
-                        solved={easySolved}
-                        total={easyTotal}
-                        color="text-green-500"
-                        bg="bg-green-500"
-                    />
-                    <DifficultyRow
-                        label="Medium"
-                        solved={mediumSolved}
-                        total={mediumTotal}
-                        color="text-yellow-500"
-                        bg="bg-yellow-500"
-                    />
-                    <DifficultyRow
-                        label="Hard"
-                        solved={hardSolved}
-                        total={hardTotal}
-                        color="text-red-500"
-                        bg="bg-red-500"
-                    />
+                {/* ── Difficulty boxes ── */}
+                <div className="flex flex-col gap-2.5 w-full">
+                    <DifficultyBox label="Easy"   solved={easySolved}   total={easyTotal}   labelColor="text-[#00b8a3]" />
+                    <DifficultyBox label="Medium" solved={mediumSolved} total={mediumTotal} labelColor="text-[#ffc01e]" />
+                    <DifficultyBox label="Hard"   solved={hardSolved}   total={hardTotal}   labelColor="text-[#ef4743]" />
                 </div>
             </div>
         </div>
     );
 }
 
-interface DifficultyRowProps {
+interface DifficultyBoxProps {
     label: string;
     solved: number;
     total: number;
-    color: string;
-    bg: string;
+    labelColor: string;
 }
 
-function DifficultyRow({ label, solved, total, color, bg }: DifficultyRowProps) {
-    const percent = total > 0 ? (solved / total) * 100 : 0;
-
+function DifficultyBox({ label, solved, total, labelColor }: DifficultyBoxProps) {
     return (
-        <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground w-16">{label}</span>
-                <div className="flex items-center gap-1">
-                    <span className="font-semibold text-foreground">{solved}</span>
-                    <span className="text-muted-foreground text-[10px]">/{total}</span>
-                    <span className={`ml-3 w-8 text-right font-medium ${total > 0 && solved > 0 ? color : 'text-muted-foreground'}`}>
-                        {percent > 0 ? `${percent.toFixed(1)}%` : 'N/A'}
-                    </span>
-                </div>
-            </div>
-            <div className="h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
-                <div
-                    className={`h-full rounded-full ${bg} opacity-80`}
-                    style={{ width: `${percent}%` }}
-                />
+        <div className="flex items-center justify-between px-3 py-2 bg-muted/20 rounded-lg min-h-[44px]">
+            <span className={`text-[13px] font-medium ${labelColor}`}>{label}</span>
+            <div className="flex items-baseline gap-1">
+                <span className="text-[14px] font-medium text-foreground">{solved}</span>
+                <span className="text-[12px] text-muted-foreground/60">/{total}</span>
             </div>
         </div>
     );

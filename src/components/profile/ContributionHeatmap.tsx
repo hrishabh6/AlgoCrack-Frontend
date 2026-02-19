@@ -262,11 +262,11 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
     }
 
     return (
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border/30 bg-card p-3 shadow-sm">
             {/* ── Stats Row ──────────────────────────────────── */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-2 text-sm">
-                    <span className="text-lg font-semibold text-foreground tracking-tight">
+                    <span className="text-lg font-medium text-foreground tracking-tight">
                         {data.totalSubmissions}
                     </span>
                     <span className="text-muted-foreground text-xs">

@@ -13,8 +13,8 @@ export function Footer() {
   }
 
   return (
-    <footer className="border-t border-border/40 bg-background">
-      <div className="flex flex-col items-center justify-between gap-4 py-6 md:h-16 md:flex-row md:py-0 w-full px-4">
+    <footer className="border-t border-border/20 bg-background opacity-60 hover:opacity-100 transition-opacity">
+      <div className="flex flex-col items-center justify-between gap-4 py-4 md:h-14 md:flex-row md:py-0 w-full px-4">
         {/* Footer content */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Code2 className="h-4 w-4" />

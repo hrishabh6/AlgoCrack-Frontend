@@ -35,7 +35,7 @@ export function UserCard({ user, languageStats }: UserCardProps) {
         : "?";
 
     return (
-        <div className="space-y-4 p-4">
+        <div className="space-y-4 p-3">
             {/* Identity Section */}
             <div className="flex items-start gap-4">
                 <Avatar className="h-16 w-16 border border-border">
@@ -46,7 +46,7 @@ export function UserCard({ user, languageStats }: UserCardProps) {
                 </Avatar>
 
                 <div className="flex-1 min-w-0 pt-1">
-                    <h1 className="text-lg font-semibold truncate text-foreground leading-tight">
+                    <h1 className="text-base font-medium truncate text-foreground leading-tight">
                         {user.name || user.userId}
                     </h1>
                     <p className="text-xs text-muted-foreground mb-1">@{user.userId}</p>
@@ -61,7 +61,10 @@ export function UserCard({ user, languageStats }: UserCardProps) {
             </div>
 
             {/* Edit Profile Button */}
-            <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm h-8 text-xs font-medium">
+            <Button
+                variant="secondary"
+                className="w-full bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground shadow-none h-7 text-xs font-medium border border-border/50"
+            >
                 Edit Profile
             </Button>
 

@@ -29,14 +29,14 @@ export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
     }
 
     return (
-        <div className="rounded-lg border border-border bg-card shadow-sm flex flex-col">
+        <div className="rounded-lg border border-border/30 bg-card shadow-sm flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <div className="px-3 py-2 border-b border-border/30 flex items-center justify-between">
+                <h2 className="text-sm font-medium text-foreground flex items-center gap-2">
                     Recent Submissions
                 </h2>
-                <Link 
-                    href="/submissions" 
+                <Link
+                    href="/submissions"
                     className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
                 >
                     View All <ArrowRight className="h-3 w-3" />
@@ -44,14 +44,14 @@ export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
             </div>
 
             {/* List */}
-            <div className="divide-y divide-border/40">
+            <div className="divide-y divide-border/30">
                 {submissions.map((sub) => {
                     const isAccepted = sub.verdict === "ACCEPTED";
                     const timeAgo = getRelativeTime(sub.timestamp);
                     return (
                         <div
                             key={sub.submissionId}
-                            className="flex items-center justify-between p-3 hover:bg-muted/30 transition-colors group"
+                            className="flex items-center justify-between p-2 hover:bg-muted/30 transition-colors group"
                         >
                             <div className="flex items-center gap-3 min-w-0">
                                 {/* Status Icon */}

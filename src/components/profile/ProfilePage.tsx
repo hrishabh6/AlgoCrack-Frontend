@@ -84,7 +84,7 @@ export function ProfilePage() {
     return (
         <div className="w-full bg-background">
             <div className="w-full max-w-[1200px] mx-auto px-4 py-4">
-                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-3">
                     {/* Left Sidebar */}
                     <aside className="lg:sticky lg:top-24 lg:self-start space-y-4">
                         <div className="rounded-lg border border-border bg-card shadow-sm">
@@ -96,7 +96,7 @@ export function ProfilePage() {
                     </aside>
 
                     {/* Main Content */}
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {/* Stats */}
                         <section>
                             <StatsCard stats={profile.userStats} />
