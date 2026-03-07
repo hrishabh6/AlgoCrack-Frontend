@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { ENDPOINTS } from "@/lib/constants";
+import { normalizeUnknownError } from "@/lib/error-utils";
 import { UserProfileResponse } from "@/types";
 import { UserCard } from "./UserCard";
 import { StatsCard } from "./StatsCard";
@@ -30,13 +31,19 @@ export function ProfilePage() {
             setLoading(true);
             setError(null);
             try {
+                const uid = encodeURIComponent(String(user.userId));
                 const data = await apiClient.get<UserProfileResponse>(
-                    `${ENDPOINTS.USER_PROFILE}/${user.userId}?page=0&size=10`
+                    `${ENDPOINTS.USER_PROFILE}/${uid}?page=0&size=10`
                 );
                 setProfile(data);
-            } catch (err: any) {
-                console.error("Failed to fetch profile:", err);
-                setError(err.message || "Failed to load profile");
+            } catch (err) {
+                const normalized = normalizeUnknownError(err, "Failed to load profile");
+                if (normalized.message.includes("404")) {
+                    setError("Profile is not available yet.");
+                } else {
+                    console.error("Failed to fetch profile:", normalized);
+                    setError(normalized.message);
+                }
             } finally {
                 setLoading(false);
             }
@@ -44,6 +51,28 @@ export function ProfilePage() {
 
         fetchProfile();
     }, [isAuthenticated, user?.userId, authLoading]);
+
+    const resolvedUserDetails = useMemo(() => {
+        if (!profile) return null;
+
+        const details = profile.userDetails;
+        if (details.name && details.name !== details.userId) {
+            return details;
+        }
+        if (!user?.email) {
+            return details;
+        }
+
+        const fallbackName = user.email
+            .split("@")[0]
+            .replace(/[._-]+/g, " ")
+            .trim();
+
+        return {
+            ...details,
+            name: fallbackName || details.name || details.userId,
+        };
+    }, [profile, user?.email]);
 
     // Auth loading
     if (authLoading) {
@@ -89,7 +118,7 @@ export function ProfilePage() {
                     <aside className="lg:sticky lg:top-24 lg:self-start space-y-4">
                         <div className="rounded-lg border border-border bg-card shadow-sm">
                             <UserCard
-                                user={profile.userDetails}
+                                user={resolvedUserDetails ?? profile.userDetails}
                                 languageStats={profile.languageStats}
                             />
                         </div>

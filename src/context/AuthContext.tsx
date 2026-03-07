@@ -1,15 +1,15 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
-import { API_URLS } from "@/lib/constants";
 import { useUserStore } from "@/store";
 
 interface User {
     userId: string;
     email: string;
     role: string;
+    name?: string;
+    imgUrl?: string;
     sub?: string; // JWT subject (email)
     exp?: number;
 }
@@ -26,46 +26,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
-
-    useEffect(() => {
-        // Check for token in localStorage on mount
-        const storedToken = localStorage.getItem("token");
-        if (storedToken) {
-            try {
-                const decoded = parseJwt(storedToken);
-                // Check expiration
-                if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-                    logout();
-                } else {
-                    setToken(storedToken);
-                    setUser(decoded);
-                    // Sync with global store
-                    useUserStore.getState().setUser(decoded.userId, decoded.sub || "");
-                }
-            } catch (e) {
-                console.error("Invalid token:", e);
-                logout();
-            }
-        }
-        setIsLoading(false);
-    }, []);
-
-    const login = useCallback((newToken: string) => {
-        localStorage.setItem("token", newToken);
-        setToken(newToken);
-        try {
-            const decoded = parseJwt(newToken);
-            setUser(decoded);
-            // Sync with global store
-            useUserStore.getState().setUser(decoded.userId, decoded.sub || "");
-        } catch (e) {
-            console.error("Failed to decode token during login:", e);
-        }
-    }, []);
 
     const logout = useCallback(() => {
         localStorage.removeItem("token");
@@ -75,6 +38,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         useUserStore.getState().logout();
         // router.push("/auth/signin"); // User requested no redirect on logout
     }, []);
+
+    const hydrateUserProfile = useCallback(async (userId: string) => {
+        try {
+            const profile = await apiClient.get<{ userDetails?: { name?: string; imgUrl?: string } }>(
+                `/api/v1/user/profile/${encodeURIComponent(userId)}?page=0&size=1`
+            );
+            const details = profile?.userDetails;
+            if (!details) return;
+
+            setUser((prev) => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    name: details.name ?? prev.name,
+                    imgUrl: details.imgUrl ?? prev.imgUrl,
+                };
+            });
+        } catch {
+            // Profile hydration is best-effort; keep auth state even if this fails.
+        }
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const finishLoading = () => {
+            queueMicrotask(() => {
+                if (!cancelled) setIsLoading(false);
+            });
+        };
+
+        const storedToken = localStorage.getItem("token");
+        if (!storedToken) {
+            useUserStore.getState().logout();
+            finishLoading();
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        try {
+            const decoded = parseJwt(storedToken);
+            if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+                localStorage.removeItem("token");
+                useUserStore.getState().logout();
+                finishLoading();
+                return () => {
+                    cancelled = true;
+                };
+            }
+
+            queueMicrotask(() => {
+                if (cancelled) return;
+                setToken(storedToken);
+                setUser(decoded);
+                setIsLoading(false);
+            });
+        } catch (e) {
+            console.error("Invalid token:", e);
+            localStorage.removeItem("token");
+            useUserStore.getState().logout();
+            finishLoading();
+        }
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!user?.userId) {
+            useUserStore.getState().logout();
+            return;
+        }
+        useUserStore.getState().setUser(user.userId, user.sub || "");
+    }, [user?.userId, user?.sub]);
+
+    const login = useCallback((newToken: string) => {
+        localStorage.setItem("token", newToken);
+        setToken(newToken);
+        try {
+            const decoded = parseJwt(newToken);
+            setUser(decoded);
+            if (decoded.userId) {
+                void hydrateUserProfile(decoded.userId);
+            }
+            // Sync with global store
+            useUserStore.getState().setUser(decoded.userId, decoded.sub || "");
+        } catch (e) {
+            console.error("Failed to decode token during login:", e);
+        }
+    }, [hydrateUserProfile]);
 
     return (
         <AuthContext.Provider
@@ -119,7 +174,7 @@ function parseJwt(token: string): User {
             role: decoded.role || "USER",
             ...decoded
         };
-    } catch (e) {
+    } catch {
         throw new Error("Invalid Token");
     }
 }

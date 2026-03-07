@@ -94,14 +94,14 @@ interface WeekCol { days: DayCell[]; isMonthBoundary: boolean; }
 export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
     const [data, setData] = useState<HeatmapResponse | null>(null);
     const [loading, setLoading] = useState(true);
-    const [selectedYear, setSelectedYear] = useState<number | null>(null);
+    const currentYear = new Date().getFullYear();
+    const [selectedYear, setSelectedYear] = useState<number>(currentYear);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; count: number, flipBelow: boolean } | null>(null);
     const [containerWidth, setContainerWidth] = useState(0);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
-    const currentYear = new Date().getFullYear();
-    const yearOptions: (number | null)[] = [null, ...Array.from({ length: currentYear - 2023 }, (_, i) => currentYear - i)];
+    const yearOptions: number[] = Array.from({ length: currentYear - 2023 + 1 }, (_, i) => currentYear - i);
 
     // ── Measure container (Crucial Fix: depend on loading) ───────
     useEffect(() => {
@@ -122,9 +122,7 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
         const fetchHeatmap = async () => {
             setLoading(true);
             try {
-                const url = selectedYear != null
-                    ? `${ENDPOINTS.USER_HEATMAP}/${userId}?year=${selectedYear}`
-                    : `${ENDPOINTS.USER_HEATMAP}/${userId}`;
+                const url = `${ENDPOINTS.USER_HEATMAP}/${userId}?year=${selectedYear}`;
                 setData(await apiClient.get<HeatmapResponse>(url));
             } catch (err) { console.error("Failed to fetch heatmap:", err); }
             finally { setLoading(false); }
@@ -269,9 +267,7 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
                     <span className="text-lg font-medium text-foreground tracking-tight">
                         {data.totalSubmissions}
                     </span>
-                    <span className="text-muted-foreground text-xs">
-                        submissions in {selectedYear ?? "the past year"}
-                    </span>
+                    <span className="text-muted-foreground text-xs">submissions in {selectedYear}</span>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>
@@ -288,18 +284,18 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
                             onClick={() => setDropdownOpen(!dropdownOpen)}
                             className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-background hover:bg-muted/50 transition-colors text-foreground text-[10px] font-medium"
                         >
-                            {selectedYear ?? "Current"}
+                            {selectedYear}
                             <ChevronDown className={`h-3 w-3 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
                         </button>
                         {dropdownOpen && (
                             <div className="absolute right-0 top-full mt-1 min-w-[100px] bg-card border border-border rounded-md shadow-lg z-50 py-1">
                                 {yearOptions.map((y) => (
                                     <button
-                                        key={y ?? "current"}
+                                        key={y}
                                         onClick={() => { setSelectedYear(y); setDropdownOpen(false); }}
                                         className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted/50 transition-colors ${selectedYear === y ? "text-primary font-semibold" : "text-muted-foreground"}`}
                                     >
-                                        {y ?? "Current"}
+                                        {y}
                                     </button>
                                 ))}
                             </div>

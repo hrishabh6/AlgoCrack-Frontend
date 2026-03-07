@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/providers";
+import { ThemeProvider, DevErrorSilencer } from "@/components/providers";
 import { Header, Footer } from "@/components/layout";
 import { AuthProvider } from "@/context/AuthContext";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +33,44 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
+        <Script
+          id="dev-error-silencer-early"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                if (typeof window === "undefined") return;
+                if ("${process.env.NODE_ENV}" !== "development") return;
+                var isPlainObject = function (v) {
+                  return typeof v === "object" && v !== null && Object.prototype.toString.call(v) === "[object Object]";
+                };
+                var shouldSilence = function (r) {
+                  if (r === "[object Object]") return true;
+                  if (r instanceof Error) return r.message === "[object Object]";
+                  if (isPlainObject(r)) {
+                    if (r.message === "[object Object]") return true;
+                    return Object.keys(r).length > 0;
+                  }
+                  return false;
+                };
+                window.addEventListener("error", function (e) {
+                  if (e.message === "[object Object]" || shouldSilence(e.error)) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                  }
+                }, { capture: true });
+                window.addEventListener("unhandledrejection", function (e) {
+                  if (shouldSilence(e.reason)) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                  }
+                }, { capture: true });
+              })();
+            `,
+          }}
+        />
         <ThemeProvider>
+          <DevErrorSilencer />
           <AuthProvider>
             <Header />
             <main className="flex-1">{children}</main>

@@ -1,5 +1,5 @@
 import { UserDetails, LanguageStat } from "@/types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -10,14 +10,18 @@ import {
     Github,
     Twitter,
     Linkedin,
-    Pencil,
     Trophy,
-    Flame,
 } from "lucide-react";
 
 interface UserCardProps {
     user: UserDetails;
     languageStats: LanguageStat[];
+}
+
+function resolveSocialUrl(value: string, base: string): string {
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    return `${base}${value}`;
 }
 
 export function UserCard({ user, languageStats }: UserCardProps) {
@@ -34,12 +38,26 @@ export function UserCard({ user, languageStats }: UserCardProps) {
             .slice(0, 2)
         : "?";
 
+    const fallbackAvatar = `https://api.dicebear.com/7.x/notionists/svg?seed=${user.userId}&backgroundColor=e5e7eb`;
+
     return (
         <div className="space-y-4 p-3">
             {/* Identity Section */}
             <div className="flex items-start gap-4">
                 <Avatar className="h-16 w-16 border border-border">
-                    <AvatarImage src={user.imgUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${user.userId}&backgroundColor=e5e7eb`} alt={user.name} />
+                    <img
+                        src={user.imgUrl || fallbackAvatar}
+                        alt={user.name}
+                        className="h-full w-full rounded-full object-cover"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                            if (e.currentTarget.src !== fallbackAvatar) {
+                                e.currentTarget.src = fallbackAvatar;
+                            } else {
+                                e.currentTarget.style.display = "none";
+                            }
+                        }}
+                    />
                     <AvatarFallback className="text-lg font-semibold bg-muted text-muted-foreground">
                         {initials}
                     </AvatarFallback>
@@ -97,7 +115,7 @@ export function UserCard({ user, languageStats }: UserCardProps) {
                 )}
                 {user.githubProfile && (
                     <a
-                        href={`https://github.com/${user.githubProfile}`}
+                        href={resolveSocialUrl(user.githubProfile, "https://github.com/")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
@@ -108,7 +126,7 @@ export function UserCard({ user, languageStats }: UserCardProps) {
                 )}
                 {user.linkedinProfile && (
                     <a
-                        href={`https://linkedin.com/in/${user.linkedinProfile}`}
+                        href={resolveSocialUrl(user.linkedinProfile, "https://linkedin.com/in/")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
@@ -119,7 +137,7 @@ export function UserCard({ user, languageStats }: UserCardProps) {
                 )}
                 {user.twitterProfile && (
                     <a
-                        href={`https://twitter.com/${user.twitterProfile}`}
+                        href={resolveSocialUrl(user.twitterProfile, "https://x.com/")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"

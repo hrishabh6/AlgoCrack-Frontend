@@ -34,6 +34,7 @@ export interface LanguageStat {
 
 export interface RecentSubmission {
   submissionId: string;
+  questionId?: number;
   questionTitle: string;
   questionSlug: string;
   verdict: string;

@@ -1,9 +1,9 @@
 "use client";
 
 import { RecentSubmission } from "@/types";
-import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { problemPath } from "@/lib/slug-utils";
 
 interface RecentSubmissionsProps {
     submissions: RecentSubmission[];
@@ -66,7 +66,9 @@ export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
                                 {/* Problem Info */}
                                 <div className="space-y-0.5 min-w-0">
                                     <Link
-                                        href={`/problems/${sub.questionSlug || sub.questionTitle.toLowerCase().replace(/\s+/g, '-')}`}
+                                        href={sub.questionId
+                                            ? problemPath(sub.questionTitle, sub.questionId)
+                                            : `/problems/${sub.questionSlug || sub.questionTitle.toLowerCase().replace(/\s+/g, '-')}`}
                                         className="text-sm font-medium truncate hover:text-primary transition-colors block leading-none"
                                     >
                                         {sub.questionTitle}

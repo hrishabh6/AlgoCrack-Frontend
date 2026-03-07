@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionSummary } from "@/types";
 import { DIFFICULTY_COLORS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { problemPath } from "@/lib/slug-utils";
 
 interface ProblemsTableProps {
   questions: QuestionSummary[];
@@ -58,7 +59,7 @@ export function ProblemsTable({ questions }: ProblemsTableProps) {
               </TableCell>
               <TableCell>
                 <Link
-                  href={`/problems/${question.id}`}
+                  href={problemPath(question.questionTitle, question.id)}
                   className="font-medium hover:underline hover:text-primary transition-colors block py-2"
                 >
                   {question.id}. {question.questionTitle}

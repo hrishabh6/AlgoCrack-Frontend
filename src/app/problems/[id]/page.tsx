@@ -1,6 +1,8 @@
-import { getQuestionById, getTestCases } from "@/lib/api/problem-service";
+import { getQuestionById, getQuestions, getTestCases } from "@/lib/api/problem-service";
 import { EditorLayout } from "@/components/editor/EditorLayout";
 import { notFound } from "next/navigation";
+import { extractProblemId, slugify } from "@/lib/slug-utils";
+import type { TestCase } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -8,14 +10,28 @@ export default async function ProblemEditorPage(props: {
     params: Promise<{ id: string }>;
 }) {
     const params = await props.params;
-    const problemId = parseInt(params.id);
+    const rawParam = decodeURIComponent(params.id);
+    let problemId = extractProblemId(rawParam);
 
-    if (isNaN(problemId)) {
+    if (problemId === null) {
+        try {
+            const query = rawParam.replace(/-/g, " ");
+            const matches = await getQuestions({ search: query, page: 0, size: 100 });
+            const matched = matches.content.find((q) => slugify(q.questionTitle) === rawParam);
+            if (matched) {
+                problemId = matched.id;
+            }
+        } catch {
+            return notFound();
+        }
+    }
+
+    if (problemId === null || Number.isNaN(problemId)) {
         return notFound();
     }
 
     let problem;
-    let testCases = [];
+    let testCases: TestCase[] = [];
 
     try {
         const [p, t] = await Promise.all([
@@ -23,7 +39,7 @@ export default async function ProblemEditorPage(props: {
             getTestCases(problemId).catch(() => []),
         ]);
         problem = p;
-        testCases = t as any; // Type assertion to handle potential mismatch or inferred type issues
+        testCases = t;
     } catch (error) {
         console.error(`Failed to fetch problem ${problemId}:`, error);
         return (

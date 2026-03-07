@@ -71,16 +71,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const metadata = problem.metadataList?.[0] ?? null;
     const lang = (metadata?.language ?? "java").toLowerCase();
     
-    // Try to load saved code
+    // Only load saved code for authenticated users.
     const userId = useUserStore.getState().userId;
-    const key = `algocrack_code_${userId || 'guest'}_${problem.id}_${lang}`;
     let initialCode = metadata?.codeTemplate ?? "";
     
-    if (typeof window !== 'undefined') {
-        const savedCode = localStorage.getItem(key);
-        if (savedCode) {
-            initialCode = savedCode;
-        }
+    if (typeof window !== 'undefined' && userId) {
+      const key = `algocrack_code_${userId}_${problem.id}_${lang}`;
+      const savedCode = localStorage.getItem(key);
+      if (savedCode) {
+        initialCode = savedCode;
+      }
     }
 
     set({ 
@@ -190,14 +190,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   // Actions - Code
   setCode: (code) => {
     set({ code });
-    // Save to local storage
+    // Save to local storage only for authenticated users.
     const state = get();
     const { currentProblem, language } = state;
     const userId = useUserStore.getState().userId; // Access directly to avoid circular dependency issues if any
     
-    if (currentProblem && language) {
-       const key = `algocrack_code_${userId || 'guest'}_${currentProblem.id}_${language}`;
-       localStorage.setItem(key, code);
+    if (currentProblem && language && userId) {
+      const key = `algocrack_code_${userId}_${currentProblem.id}_${language}`;
+      localStorage.setItem(key, code);
     }
   },
 
@@ -215,17 +215,26 @@ export const useEditorStore = create<EditorState>((set, get) => ({
          return;
      }
 
-     const key = `algocrack_code_${userId || 'guest'}_${currentProblem.id}_${newLang}`;
+     // Anonymous users should always see template code, not persisted drafts.
+     if (!userId) {
+      const metadata = currentProblem.metadataList.find(
+        (m) => m.language.toLowerCase() === newLang
+      );
+      set({ language: newLang, code: metadata?.codeTemplate ?? "" });
+      return;
+     }
+
+     const key = `algocrack_code_${userId}_${currentProblem.id}_${newLang}`;
      const savedCode = localStorage.getItem(key);
-     
+
      if (savedCode) {
-         set({ language: newLang, code: savedCode });
+      set({ language: newLang, code: savedCode });
      } else {
-         // Find template for this language
-         const metadata = currentProblem.metadataList.find(
-             (m) => m.language.toLowerCase() === newLang
-         );
-         set({ language: newLang, code: metadata?.codeTemplate ?? "" });
+      // Find template for this language
+      const metadata = currentProblem.metadataList.find(
+        (m) => m.language.toLowerCase() === newLang
+      );
+      set({ language: newLang, code: metadata?.codeTemplate ?? "" });
      }
   },
   setEditorRef: (editorRef) => set({ editorRef }),

@@ -1,5 +1,6 @@
 import { ENDPOINTS } from "../constants";
 import { apiClient } from "../api-client";
+import { normalizeUnknownError } from "../error-utils";
 import type { RunRequest, RunResponse, SubmitRequest, SubmitResponse, SubmissionDetail } from "@/types";
 
 // ============================================================================
@@ -43,15 +44,7 @@ export async function getSubmission(submissionId: string): Promise<SubmissionDet
   try {
     return await apiClient.get<SubmissionDetail>(`${ENDPOINTS.SUBMISSIONS}/${submissionId}`);
   } catch (error) {
-    // If it's a 404/Null return from API client (though apiClient throws on 404 by default usually, unless modified)
-    // We need to check if apiClient throws on 404 or how we handle it. 
-    // The previous implementation utilized response.ok check. 
-    // Let's assume apiClient throws an error for non-2xx.
-    // We might want to catch it or let it propagate. 
-    // For now, let's propagate as it simplifies logic, but the previous code returned null on 404.
-    // If we want to keep that behavior, we'd need to modify apiClient or handle it here.
-    // Let's just propagate for now as standard practice.
-    throw error;
+    throw normalizeUnknownError(error, "Failed to fetch submission");
   }
 }
 
@@ -119,7 +112,7 @@ export async function executeCustomTestCases(payload: {
   language: string;
   code: string;
   testCases: Array<{ input: string }>;
-}): Promise<any> {
+}): Promise<unknown> {
   console.warn("executeCustomTestCases is deprecated. Use runCode() instead.");
   
   // Convert to new runCode format

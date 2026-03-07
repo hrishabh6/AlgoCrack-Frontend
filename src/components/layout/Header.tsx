@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { Code2, User, LogOut, Settings, Sun, Moon } from "lucide-react";
 import { ProblemActions } from "@/components/problems/problem-actions";
 import { useAuth } from "@/context/AuthContext";
+import { apiClient } from "@/lib/api-client";
 
 const navLinks = [
   { href: "/problems", label: "Problems" },
@@ -26,10 +28,37 @@ export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useUserStore();
   const { user, isAuthenticated, logout } = useAuth();
+  const [profileImg, setProfileImg] = useState<string | null>(null);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
+
+  const fallbackAvatar = user?.userId
+    ? `https://api.dicebear.com/7.x/notionists/svg?seed=${user.userId}&backgroundColor=e5e7eb`
+    : "";
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.userId) return;
+
+    let cancelled = false;
+    const loadProfileImage = async () => {
+      try {
+        const profile = await apiClient.get<{ userDetails?: { imgUrl?: string } }>(
+          `/api/v1/user/profile/${encodeURIComponent(user.userId)}?page=0&size=1`
+        );
+        const img = profile?.userDetails?.imgUrl ?? null;
+        if (!cancelled) setProfileImg(img);
+      } catch {
+        if (!cancelled) setProfileImg(null);
+      }
+    };
+
+    void loadProfileImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user?.userId]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -88,6 +117,18 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
+                    <AvatarImage
+                      src={profileImg || user?.imgUrl || fallbackAvatar}
+                      alt={user?.email || "User"}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        if (fallbackAvatar && e.currentTarget.src !== fallbackAvatar) {
+                          e.currentTarget.src = fallbackAvatar;
+                        } else {
+                          e.currentTarget.style.display = "none";
+                        }
+                      }}
+                    />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
