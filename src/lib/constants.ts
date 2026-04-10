@@ -1,7 +1,9 @@
-// API Configuration
+const gatewayBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:9090";
+
 // API Configuration
 export const API_URLS = {
-  GATEWAY: "http://localhost:9090",
+  GATEWAY: gatewayBaseUrl,
 } as const;
 
 // API Endpoints
