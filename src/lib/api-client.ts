@@ -94,4 +94,8 @@ class ApiClient {
   }
 }
 
+// For client-side calls (browser → localhost:9090)
 export const apiClient = new ApiClient(API_URLS.GATEWAY);
+
+// For server-side calls (K8s pod → api-gateway:9090)
+export const serverApiClient = new ApiClient(API_URLS.SERVER_GATEWAY);

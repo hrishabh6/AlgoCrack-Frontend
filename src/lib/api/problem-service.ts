@@ -1,5 +1,5 @@
 import { ENDPOINTS } from "../constants";
-import { apiClient } from "../api-client";
+import { serverApiClient } from "../api-client";
 import type {
   QuestionSummary,
   QuestionDetail,
@@ -25,7 +25,7 @@ export async function getQuestions(
   if (filters.search) params.set("search", filters.search);
   if (filters.company) params.set("company", filters.company);
   
-  return apiClient.get<PaginatedResponse<QuestionSummary>>(
+  return serverApiClient.get<PaginatedResponse<QuestionSummary>>(
     `${ENDPOINTS.QUESTIONS}?${params.toString()}`
   );
 }
@@ -34,21 +34,21 @@ export async function getQuestions(
  * Fetch a single question by ID
  */
 export async function getQuestionById(id: number): Promise<QuestionDetail> {
-  return apiClient.get<QuestionDetail>(`${ENDPOINTS.QUESTIONS}/${id}`);
+  return serverApiClient.get<QuestionDetail>(`${ENDPOINTS.QUESTIONS}/${id}`);
 }
 
 /**
  * Fetch all tags
  */
 export async function getTags(): Promise<Tag[]> {
-  return apiClient.get<Tag[]>(`${ENDPOINTS.TAGS}`);
+  return serverApiClient.get<Tag[]>(`${ENDPOINTS.TAGS}`);
 }
 
 /**
  * Fetch test cases for a question (visible only)
  */
 export async function getTestCases(questionId: number): Promise<TestCase[]> {
-    const testCases = await apiClient.get<TestCase[]>(`${ENDPOINTS.TEST_CASES}/question/${questionId}`);
+    const testCases = await serverApiClient.get<TestCase[]>(`${ENDPOINTS.TEST_CASES}/question/${questionId}`);
   // Filter to only show DEFAULT (non-hidden) test cases
   return testCases.filter((tc) => tc.type === "DEFAULT");
 }
@@ -57,5 +57,5 @@ export async function getTestCases(questionId: number): Promise<TestCase[]> {
  * Fetch solutions for a question
  */
 export async function getSolutions(questionId: number): Promise<Solution[]> {
-  return apiClient.get<Solution[]>(`${ENDPOINTS.SOLUTIONS}/question/${questionId}`);
+  return serverApiClient.get<Solution[]>(`${ENDPOINTS.SOLUTIONS}/question/${questionId}`);
 }

@@ -4,9 +4,16 @@
 const gatewayBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "";
 
+// Server-side (SSR) uses internal K8s service URL to reach the API gateway.
+// Falls back to the public URL if not set.
+const serverBaseUrl =
+  process.env.INTERNAL_API_BASE_URL?.trim() || gatewayBaseUrl;
+
 // API Configuration
 export const API_URLS = {
   GATEWAY: gatewayBaseUrl,
+  // Use this for server-side data fetching (runs inside the K8s pod)
+  SERVER_GATEWAY: typeof window === "undefined" ? serverBaseUrl : gatewayBaseUrl,
 } as const;
 
 // API Endpoints
