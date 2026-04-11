@@ -11,10 +11,12 @@ cp .env.example .env.local
 The frontend expects:
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:9090
+NEXT_PUBLIC_API_BASE_URL=
 ```
 
-This should point to the API Gateway in every environment. For local development, that is usually `http://localhost:9090`.
+Leave this empty to use same-origin API calls, which is the preferred default for deployments behind a shared host or ingress.
+
+Set it explicitly only when the browser must call a different public API host. For local development, that is usually `http://localhost:9090`.
 
 Then run the development server:
 

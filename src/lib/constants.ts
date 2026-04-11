@@ -1,5 +1,8 @@
+// Prefer an explicit public gateway URL when one is intentionally provided.
+// Otherwise default to same-origin so browser requests work behind Ingress
+// without baking an environment-specific hostname into the bundle.
 const gatewayBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:9090";
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "";
 
 // API Configuration
 export const API_URLS = {
