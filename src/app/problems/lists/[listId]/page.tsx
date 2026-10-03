@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getProblemList, getSavedProblems } from "@/lib/api/problem-lists-service";
 import { LibraryLayout, type LibrarySection } from "@/components/problems/library-sidebar";
 import { ProblemsTable, ProblemsTableSkeleton } from "@/components/problems/problems-table";
-import { DIFFICULTY_TEXT, EmptyState, PageContainer, PageHeader } from "@/components/shared";
+import { DIFFICULTY_TEXT, EmptyState, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { normalizeUnknownError } from "@/lib/error-utils";
@@ -42,9 +42,7 @@ function formatDate(value: string | null | undefined): string | null {
 
 function PageFrame({ active, children }: { active: LibrarySection; children: React.ReactNode }) {
   return (
-    <PageContainer size="wide">
-      <LibraryLayout active={active}>{children}</LibraryLayout>
-    </PageContainer>
+    <LibraryLayout active={active}>{children}</LibraryLayout>
   );
 }
 

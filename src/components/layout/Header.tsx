@@ -17,7 +17,7 @@ import { useUserStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { User, LogOut, Sun, Moon, Menu, ListChecks, History } from "lucide-react";
 import { ProblemActions } from "@/components/problems/problem-actions";
-import { BrandMark } from "@/components/shared";
+import { BrandMark, SHELL_CLASS } from "@/components/shared";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { StreakBadge } from "./StreakBadge";
@@ -33,6 +33,11 @@ function isProblemWorkspace(pathname: string) {
     !pathname.startsWith("/problems/lists") &&
     pathname.split("/").length > 2
   );
+}
+
+/** Problem list and list views use a full-width three-column workspace. */
+export function isProblemBrowser(pathname: string) {
+  return pathname === "/problems" || pathname.startsWith("/problems/lists");
 }
 
 export function Header() {
@@ -78,8 +83,8 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/90 backdrop-blur-sm supports-[backdrop-filter]:bg-background/75">
       <div
         className={cn(
-          "relative mx-auto flex h-12 w-full items-center gap-2 px-3 sm:px-4",
-          !inWorkspace && "max-w-7xl sm:px-6"
+          "relative flex h-12 items-center gap-2",
+          inWorkspace || isProblemBrowser(pathname) ? "w-full px-3 sm:px-4" : SHELL_CLASS
         )}
       >
         <Link

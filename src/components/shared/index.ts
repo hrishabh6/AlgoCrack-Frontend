@@ -1,3 +1,4 @@
+export { Container, SHELL_CLASS } from "./Container";
 export { PageContainer } from "./PageContainer";
 export { PageHeader } from "./PageHeader";
 export { DifficultyBadge, DIFFICULTY_TEXT, DIFFICULTY_BAR } from "./DifficultyBadge";

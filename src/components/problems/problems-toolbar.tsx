@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Check, ChevronDown, X } from "lucide-react";
-import { SearchInput } from "@/components/shared";
+import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpNarrowWide, Check, Filter, Search, Shuffle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,32 +40,70 @@ interface ProblemsToolbarProps {
   tags: TagCount[] | null;
   /** Solve-status filtering needs a signed-in user. */
   showStatus: boolean;
+  /** Solved / total problems for the signed-in user; omit to hide the progress ring. */
+  progress?: { solved: number; total: number } | null;
+  /** Opens a random problem from the current results; omit to hide the button. */
+  onRandom?: () => void;
 }
 
-function FilterTrigger({
-  label,
-  value,
-  active,
-  ...props
-}: { label: string; value?: React.ReactNode; active: boolean } & React.ComponentProps<"button">) {
+const iconButton =
+  "size-8 rounded-full border border-border bg-surface text-muted-foreground hover:bg-accent hover:text-foreground";
+
+function SolvedRing({ solved, total }: { solved: number; total: number }) {
+  const ratio = total > 0 ? Math.min(1, solved / total) : 0;
+  const r = 8;
+  const c = 2 * Math.PI * r;
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className={cn(
-        "shrink-0 gap-1.5 border-border font-normal",
-        active && "border-primary/40 bg-primary/8 text-foreground"
-      )}
-      {...props}
-    >
-      <span className={cn(active ? "text-muted-foreground" : "text-foreground")}>{label}</span>
-      {value && <span className="max-w-[9rem] truncate font-medium text-foreground">{value}</span>}
-      <ChevronDown className="size-3.5 text-subtle-foreground" />
-    </Button>
+    <span className="flex items-center gap-2 text-[13px] text-muted-foreground" title={`${solved} of ${total} solved`}>
+      <svg viewBox="0 0 20 20" className="size-5 -rotate-90" aria-hidden="true">
+        <circle cx="10" cy="10" r={r} fill="none" strokeWidth="2.5" className="stroke-muted" />
+        <circle
+          cx="10"
+          cy="10"
+          r={r}
+          fill="none"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray={`${ratio * c} ${c}`}
+          className="stroke-success"
+        />
+      </svg>
+      <span>
+        <span className="font-mono tabular-nums text-foreground">
+          {solved}/{total}
+        </span>{" "}
+        Solved
+      </span>
+    </span>
   );
 }
 
-export function ProblemsToolbar({ filters, onChange, onToggleTag, onReset, tags, showStatus }: ProblemsToolbarProps) {
+function ActiveFilter({ label, onRemove }: { label: React.ReactNode; onRemove: () => void }) {
+  return (
+    <span className="inline-flex h-6 items-center gap-1 rounded-full border border-border bg-surface pl-2.5 pr-1 text-xs text-foreground">
+      {label}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="flex size-4 items-center justify-center rounded-full text-subtle-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label={`Remove filter ${typeof label === "string" ? label : ""}`.trim()}
+      >
+        <X className="size-3" />
+      </button>
+    </span>
+  );
+}
+
+export function ProblemsToolbar({
+  filters,
+  onChange,
+  onToggleTag,
+  onReset,
+  tags,
+  showStatus,
+  progress,
+  onRandom,
+}: ProblemsToolbarProps) {
   const [search, setSearch] = useState(filters.search);
   const [syncedSearch, setSyncedSearch] = useState(filters.search);
   const [pushedSearch, setPushedSearch] = useState(filters.search);
@@ -92,110 +129,40 @@ export function ProblemsToolbar({ filters, onChange, onToggleTag, onReset, tags,
   }, [search, filters.search, onChange]);
 
   const topicOptions = (tags ?? []).filter((t) => t.problemCount > 0 || filters.tags.includes(t.name));
-  const topicValue =
-    filters.tags.length === 0 ? undefined : filters.tags.length === 1 ? filters.tags[0] : `${filters.tags.length} selected`;
+  const activeCount = (filters.difficulty ? 1 : 0) + (filters.status ? 1 : 0) + filters.tags.length;
   const active = hasActiveFilters(filters);
 
   return (
-    <div className="flex flex-col gap-2 md:flex-row md:items-center">
-      <SearchInput
-        value={search}
-        onValueChange={setSearch}
-        placeholder="Search by title or number"
-        aria-label="Search problems"
-        containerClassName="w-full md:max-w-xs"
-        className="h-8"
-      />
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1 sm:max-w-60 sm:flex-none">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle-foreground"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search questions"
+            aria-label="Search problems"
+            className="h-8 w-full rounded-full border border-border bg-surface pl-9 pr-3 text-[13px] text-foreground outline-none transition-[color,box-shadow] placeholder:text-subtle-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 [&::-webkit-search-cancel-button]:hidden"
+          />
+        </div>
 
-      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] md:mx-0 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <FilterTrigger label="Difficulty" value={filters.difficulty ?? undefined} active={!!filters.difficulty} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-44">
-            <DropdownMenuRadioGroup
-              value={filters.difficulty ?? "all"}
-              onValueChange={(v) => onChange({ difficulty: v === "all" ? null : (v as Difficulty) })}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={iconButton}
+              aria-label={`Sort by ${SORT_LABEL[filters.sort]}, ${filters.order === "asc" ? "ascending" : "descending"}`}
+              title={`Sort: ${SORT_LABEL[filters.sort]} (${filters.order === "asc" ? "ascending" : "descending"})`}
             >
-              <DropdownMenuRadioItem value="all">Any difficulty</DropdownMenuRadioItem>
-              {(Object.keys(DIFFICULTY_DOT) as Difficulty[]).map((d) => (
-                <DropdownMenuRadioItem key={d} value={d}>
-                  <span className={cn("size-1.5 rounded-full", DIFFICULTY_DOT[d])} aria-hidden="true" />
-                  {d}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <FilterTrigger label="Topics" value={topicValue} active={filters.tags.length > 0} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-y-auto">
-            <DropdownMenuLabel className="flex items-center justify-between text-xs font-normal text-muted-foreground">
-              Match all selected
-              {filters.tags.length > 0 && (
-                <button
-                  type="button"
-                  className="text-xs font-medium text-primary hover:underline"
-                  onClick={() => onChange({ tags: [] })}
-                >
-                  Clear
-                </button>
-              )}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {tags === null ? (
-              <div className="px-2 py-1.5 text-xs text-muted-foreground">Loading topics…</div>
-            ) : topicOptions.length === 0 ? (
-              <div className="px-2 py-1.5 text-xs text-muted-foreground">No topics yet</div>
-            ) : (
-              topicOptions.map((tag) => (
-                <DropdownMenuCheckboxItem
-                  key={tag.id}
-                  checked={filters.tags.includes(tag.name)}
-                  onSelect={(e) => e.preventDefault()}
-                  onCheckedChange={() => onToggleTag(tag.name)}
-                >
-                  <span className="flex-1 truncate">{tag.name}</span>
-                  <span className="font-mono text-[10px] tabular-nums text-subtle-foreground">{tag.problemCount}</span>
-                </DropdownMenuCheckboxItem>
-              ))
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {showStatus && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <FilterTrigger
-                label="Status"
-                value={filters.status ? (filters.status === "solved" ? "Solved" : "Unsolved") : undefined}
-                active={!!filters.status}
-              />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-40">
-              <DropdownMenuRadioGroup
-                value={filters.status ?? "all"}
-                onValueChange={(v) => onChange({ status: v === "all" ? null : (v as SolveStatusFilter) })}
-              >
-                <DropdownMenuRadioItem value="all">Any status</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="solved">Solved</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="unsolved">Unsolved</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="shrink-0 gap-1.5" aria-label={`Sort by ${SORT_LABEL[filters.sort]}, ${filters.order === "asc" ? "ascending" : "descending"}`}>
-              {filters.order === "asc" ? <ArrowUpNarrowWide /> : <ArrowDownWideNarrow />}
-              <span className="text-foreground">{SORT_LABEL[filters.sort]}</span>
+              <ArrowUpDown className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuContent align="start" className="w-44">
             <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Sort by</DropdownMenuLabel>
             <DropdownMenuRadioGroup value={filters.sort} onValueChange={(v) => onChange({ sort: v as ProblemSortKey })}>
               {(Object.keys(SORT_LABEL) as ProblemSortKey[]).map((key) => (
@@ -215,13 +182,142 @@ export function ProblemsToolbar({ filters, onChange, onToggleTag, onReset, tags,
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {active && (
-          <Button variant="ghost" size="sm" onClick={onReset} className="shrink-0">
-            <X />
-            Reset
-          </Button>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={cn(iconButton, "relative", activeCount > 0 && "border-primary/50 text-primary")}
+              aria-label={activeCount > 0 ? `Filters, ${activeCount} active` : "Filters"}
+              title="Filter"
+            >
+              <Filter className="size-4" />
+              {activeCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary font-mono text-[9px] font-semibold text-primary-foreground">
+                  {activeCount}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-[70vh] w-60 overflow-y-auto">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Difficulty</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={filters.difficulty ?? "all"}
+              onValueChange={(v) => onChange({ difficulty: v === "all" ? null : (v as Difficulty) })}
+            >
+              <DropdownMenuRadioItem value="all" onSelect={(e) => e.preventDefault()}>
+                Any
+              </DropdownMenuRadioItem>
+              {(Object.keys(DIFFICULTY_DOT) as Difficulty[]).map((d) => (
+                <DropdownMenuRadioItem key={d} value={d} onSelect={(e) => e.preventDefault()}>
+                  <span className={cn("size-1.5 rounded-full", DIFFICULTY_DOT[d])} aria-hidden="true" />
+                  {d}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+
+            {showStatus && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Status</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={filters.status ?? "all"}
+                  onValueChange={(v) => onChange({ status: v === "all" ? null : (v as SolveStatusFilter) })}
+                >
+                  <DropdownMenuRadioItem value="all" onSelect={(e) => e.preventDefault()}>
+                    Any
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="solved" onSelect={(e) => e.preventDefault()}>
+                    Solved
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="unsolved" onSelect={(e) => e.preventDefault()}>
+                    Unsolved
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </>
+            )}
+
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              Topics <span className="text-subtle-foreground">· match all</span>
+            </DropdownMenuLabel>
+            {tags === null ? (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">Loading topics…</div>
+            ) : topicOptions.length === 0 ? (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">No topics yet</div>
+            ) : (
+              topicOptions.map((tag) => (
+                <DropdownMenuCheckboxItem
+                  key={tag.id}
+                  checked={filters.tags.includes(tag.name)}
+                  onSelect={(e) => e.preventDefault()}
+                  onCheckedChange={() => onToggleTag(tag.name)}
+                >
+                  <span className="flex-1 truncate">{tag.name}</span>
+                  <span className="font-mono text-[10px] tabular-nums text-subtle-foreground">{tag.problemCount}</span>
+                </DropdownMenuCheckboxItem>
+              ))
+            )}
+
+            {active && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={onReset} className="text-muted-foreground">
+                  <X />
+                  Reset all filters
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="ml-auto flex shrink-0 items-center gap-3">
+          {progress && (
+            <span className="hidden sm:inline-flex">
+              <SolvedRing solved={progress.solved} total={progress.total} />
+            </span>
+          )}
+          {onRandom && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="size-8 rounded-full text-muted-foreground hover:text-foreground"
+              onClick={onRandom}
+              aria-label="Pick a random problem"
+              title="Pick a random problem"
+            >
+              <Shuffle className="size-4" />
+            </Button>
+          )}
+        </div>
       </div>
+
+      {active && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {filters.search && (
+            <ActiveFilter label={`“${filters.search}”`} onRemove={() => onChange({ search: "" })} />
+          )}
+          {filters.difficulty && (
+            <ActiveFilter label={filters.difficulty} onRemove={() => onChange({ difficulty: null })} />
+          )}
+          {filters.status && (
+            <ActiveFilter
+              label={filters.status === "solved" ? "Solved" : "Unsolved"}
+              onRemove={() => onChange({ status: null })}
+            />
+          )}
+          {filters.tags.map((tag) => (
+            <ActiveFilter key={tag} label={tag} onRemove={() => onToggleTag(tag)} />
+          ))}
+          <button
+            type="button"
+            onClick={onReset}
+            className="ml-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Reset
+          </button>
+        </div>
+      )}
     </div>
   );
 }

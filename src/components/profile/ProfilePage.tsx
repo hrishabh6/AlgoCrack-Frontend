@@ -128,13 +128,13 @@ export function ProfilePage() {
     const maxLanguageSolved = Math.max(1, ...languageStats.map((l) => l.problemsSolved));
 
     return (
-        <PageContainer className="space-y-4">
+        <PageContainer className="space-y-4 xl:space-y-5">
             <UserCard user={details} />
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
                 {/* Main column */}
-                <div className="min-w-0 space-y-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="min-w-0 space-y-4 xl:space-y-5">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4">
                         <StatCard
                             label="Streak"
                             icon={<Flame className={cn(streak?.activeToday && streak.currentStreak > 0 && "text-warning")} />}
@@ -257,7 +257,7 @@ function ProfileSkeleton() {
                     <Skeleton className="h-3.5 w-72 max-w-full" />
                 </div>
             </div>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         {Array.from({ length: 4 }).map((_, i) => (

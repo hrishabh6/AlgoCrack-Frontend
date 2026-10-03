@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FlaskConical, History, Languages, Play, Send, ShieldCheck } from "lucide-react";
 import { SUPPORTED_LANGUAGES } from "@/lib/constants";
+import { Container } from "@/components/shared";
 
 const languageList = SUPPORTED_LANGUAGES.map((l) => l.label).join(" and ");
 
@@ -42,7 +43,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       <section className="border-b">
-        <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-[1.05fr_1fr]">
+        <Container className="grid items-center gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] xl:gap-20 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
           <div className="max-w-xl">
             <p className="mb-4 inline-flex items-center gap-2 rounded-md border bg-surface px-2 py-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
               <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
@@ -71,11 +72,11 @@ export default function HomePage() {
           </div>
 
           <EditorPreview />
-        </div>
+        </Container>
       </section>
 
       <section className="border-b">
-        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
+        <Container className="py-16">
           <div className="max-w-2xl">
             <h2 className="text-xl font-semibold tracking-tight">Built around the practice loop</h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -93,12 +94,12 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
 
       <section>
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-16 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-          <ol className="grid flex-1 gap-6 sm:grid-cols-3">
+        <Container className="flex flex-col gap-10 py-16 lg:flex-row lg:items-center lg:justify-between xl:gap-16">
+          <ol className="grid max-w-5xl flex-1 gap-6 sm:grid-cols-3 xl:gap-10">
             {steps.map((step, index) => (
               <li key={step.label} className="flex gap-3">
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-surface font-mono text-xs text-primary">
@@ -117,7 +118,7 @@ export default function HomePage() {
               <ArrowRight />
             </Link>
           </Button>
-        </div>
+        </Container>
       </section>
     </div>
   );
@@ -158,7 +159,7 @@ function EditorPreview() {
           </span>
         </div>
       </div>
-      <pre className="overflow-x-auto px-0 py-3 font-mono text-[12.5px] leading-6">
+      <pre className="overflow-x-auto px-0 py-3 font-mono text-[12.5px] leading-6 2xl:py-4 2xl:text-[13.5px] 2xl:leading-7">
         {previewLines.map((tokens, i) => (
           <div key={i} className="flex">
             <span className="w-10 shrink-0 select-none pr-3 text-right text-subtle-foreground">

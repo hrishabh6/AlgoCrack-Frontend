@@ -10,9 +10,13 @@ import { ProblemsPagination } from "@/components/problems/problems-pagination";
 import { TopicChips } from "@/components/problems/topic-chips";
 import { LibraryLayout } from "@/components/problems/library-sidebar";
 import { hasActiveFilters, toQuestionFilters, useProblemFilters } from "@/components/problems/use-problem-filters";
-import { EmptyState, PageContainer, PageHeader } from "@/components/shared";
+import { EmptyState } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { useProblemLibraryStore } from "@/store/useProblemLibraryStore";
+import { useUserProgressStore } from "@/store/useUserProgressStore";
+import { ProblemsRail } from "@/components/problems/problems-rail";
+import { problemPath } from "@/lib/slug-utils";
+import { useRouter } from "next/navigation";
 import type { PaginatedResponse, QuestionSummary, TagCount } from "@/types";
 
 interface QueryResult {
@@ -22,7 +26,8 @@ interface QueryResult {
 }
 
 function ProblemsPageContent() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const router = useRouter();
   const { filters, setFilters, toggleTag, resetFilters, pageHref } = useProblemFilters();
   const libraryStatus = useProblemLibraryStore((s) => s.status);
   const solvedIdList = useProblemLibraryStore((s) => s.solvedIds);
@@ -82,35 +87,30 @@ function ProblemsPageContent() {
   const total = data?.totalElements;
   const filtered = hasActiveFilters(filters);
 
-  return (
-    <PageContainer size="wide">
-      <LibraryLayout active={{ kind: "all" }}>
-        <PageHeader
-          title="Problems"
-          meta={
-            typeof total === "number" && !error ? (
-              <span className="flex items-center gap-3 font-mono tabular-nums">
-                <span>
-                  {total} {filtered ? "matching" : total === 1 ? "problem" : "problems"}
-                </span>
-                {solvedIds && (
-                  <span className="text-success">
-                    {solvedIds.size} solved
-                  </span>
-                )}
-              </span>
-            ) : null
-          }
-          description="Pick a topic, narrow it down, and keep the ones worth revisiting in your own lists."
-        />
+  const progressStats = useUserProgressStore((s) => s.stats);
+  const loadProgress = useUserProgressStore((s) => s.load);
+  useEffect(() => {
+    if (isAuthenticated && user?.userId) void loadProgress(String(user.userId));
+  }, [isAuthenticated, user?.userId, loadProgress]);
 
-        <div className="mt-5 space-y-3">
-          <TopicChips
-            tags={tags}
-            selected={filters.tags}
-            onToggle={toggleTag}
-            onClear={() => setFilters({ tags: [] })}
-          />
+  const progress =
+    solvedIds && progressStats ? { solved: solvedIds.size, total: progressStats.totalQuestions } : null;
+
+  const pickRandom = () => {
+    const pool = data?.content ?? [];
+    if (pool.length === 0) return;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    router.push(problemPath(pick.questionTitle, pick.id));
+  };
+
+  return (
+    <LibraryLayout active={{ kind: "all" }} rail={<ProblemsRail />}>
+        <h1 className="sr-only">
+          Problems{typeof total === "number" && !error ? ` (${total} ${filtered ? "matching" : "total"})` : ""}
+        </h1>
+
+        <div className="space-y-4">
+          <TopicChips tags={tags} selected={filters.tags} onToggle={toggleTag} />
           <ProblemsToolbar
             filters={filters}
             onChange={setFilters}
@@ -118,6 +118,8 @@ function ProblemsPageContent() {
             onReset={resetFilters}
             tags={tags}
             showStatus={isAuthenticated}
+            progress={progress}
+            onRandom={data && data.content.length > 0 ? pickRandom : undefined}
           />
         </div>
 
@@ -143,7 +145,6 @@ function ProblemsPageContent() {
               <ProblemsTable
                 questions={data.content}
                 solvedIds={solvedIds}
-                activeTags={filters.tags}
                 emptyState={
                   <EmptyState
                     icon={<SearchX />}
@@ -173,8 +174,7 @@ function ProblemsPageContent() {
             </div>
           )}
         </div>
-      </LibraryLayout>
-    </PageContainer>
+    </LibraryLayout>
   );
 }
 
@@ -182,9 +182,9 @@ export default function ProblemsPage() {
   return (
     <Suspense
       fallback={
-        <PageContainer size="wide">
+        <div className="mx-auto w-full max-w-[66rem] px-4 py-6 sm:px-6 lg:px-8">
           <ProblemsTableSkeleton />
-        </PageContainer>
+        </div>
       }
     >
       <ProblemsPageContent />

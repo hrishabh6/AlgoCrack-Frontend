@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BrandMark } from "@/components/shared";
+import { BrandMark, Container } from "@/components/shared";
 
 const footerLinks = [
   { href: "/problems", label: "Problems" },
@@ -13,18 +13,14 @@ const footerLinks = [
 export function Footer() {
   const pathname = usePathname();
 
-  // Hide footer on problem pages where the editor takes full height
-  if (
-    pathname.startsWith("/problems/") &&
-    !pathname.startsWith("/problems/lists") &&
-    pathname.split("/").length > 2
-  ) {
+  // The coding workspace and the problem browser are full-height app views without a footer.
+  if (pathname.startsWith("/problems")) {
     return null;
   }
 
   return (
     <footer className="border-t">
-      <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6">
+      <Container className="flex flex-col items-center justify-between gap-3 py-5 sm:flex-row">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <BrandMark showWordmark={false} className="opacity-80" />
           <span>© {new Date().getFullYear()} AlgoCrack</span>
@@ -40,7 +36,7 @@ export function Footer() {
             </Link>
           ))}
         </nav>
-      </div>
+      </Container>
     </footer>
   );
 }
