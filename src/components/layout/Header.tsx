@@ -35,6 +35,11 @@ function isProblemWorkspace(pathname: string) {
   );
 }
 
+/** Problem list and list views use a full-width three-column workspace. */
+export function isProblemBrowser(pathname: string) {
+  return pathname === "/problems" || pathname.startsWith("/problems/lists");
+}
+
 export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useUserStore();
@@ -79,7 +84,7 @@ export function Header() {
       <div
         className={cn(
           "relative flex h-12 items-center gap-2",
-          inWorkspace ? "w-full px-3 sm:px-4" : SHELL_CLASS
+          inWorkspace || isProblemBrowser(pathname) ? "w-full px-3 sm:px-4" : SHELL_CLASS
         )}
       >
         <Link

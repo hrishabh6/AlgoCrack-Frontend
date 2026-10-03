@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bookmark, LayoutList, Library, ListChecks, PanelLeftClose, PanelLeftOpen, Plus, RotateCcw } from "lucide-react";
+import { Bookmark, Library, ListChecks, PanelLeftOpen, Plus, RotateCcw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -13,36 +13,6 @@ import { useListDialogStore } from "@/store/useListDialogStore";
 import { useProblemLibraryStore } from "@/store/useProblemLibraryStore";
 
 export type LibrarySection = { kind: "all" } | { kind: "saved" } | { kind: "list"; id: number };
-
-const COLLAPSE_KEY = "algocrack.problems.library-collapsed";
-const collapseListeners = new Set<() => void>();
-
-function subscribeCollapsed(onChange: () => void) {
-  collapseListeners.add(onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    collapseListeners.delete(onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-function readCollapsed() {
-  try {
-    return window.localStorage.getItem(COLLAPSE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-/** Sidebar visibility is a per-device UI preference, so localStorage is the right home for it. */
-function toggleCollapsed(value: boolean) {
-  try {
-    window.localStorage.setItem(COLLAPSE_KEY, value ? "1" : "0");
-  } catch {
-    // Storage unavailable (private mode); the preference just won't persist.
-  }
-  collapseListeners.forEach((listener) => listener());
-}
 
 export function listPath(listId: number | "saved") {
   return `/problems/lists/${listId}`;
@@ -69,10 +39,10 @@ function NavItem({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex h-8 items-center gap-2.5 rounded-md px-2 text-sm transition-colors",
+        "group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
         active
-          ? "bg-accent font-medium text-foreground"
+          ? "bg-accent font-semibold text-foreground"
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
     >
@@ -97,12 +67,12 @@ function LibraryNav({ active, onNavigate }: { active: LibrarySection; onNavigate
   const ready = isAuthenticated && status === "ready";
 
   return (
-    <nav aria-label="Problem library" className="space-y-5">
+    <nav aria-label="Problem library" className="space-y-4">
       <div className="space-y-0.5">
         <NavItem
           href="/problems"
-          icon={<LayoutList />}
-          label="All problems"
+          icon={<Library />}
+          label="Library"
           active={active.kind === "all"}
           onNavigate={onNavigate}
         />
@@ -116,9 +86,9 @@ function LibraryNav({ active, onNavigate }: { active: LibrarySection; onNavigate
         />
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">My lists</h2>
+      <div className="space-y-1.5 border-t pt-4">
+        <div className="flex items-center justify-between px-2.5">
+          <h2 className="text-xs font-semibold text-muted-foreground">My Lists</h2>
           {ready && (
             <Button
               variant="ghost"
@@ -196,58 +166,58 @@ function LibraryNav({ active, onNavigate }: { active: LibrarySection; onNavigate
 }
 
 /**
- * Page frame for the problem browser and list views: a collapsible library sidebar on desktop
- * and a slide-in sheet on smaller screens.
+ * Three-column problem workspace: library sidebar pinned to the left edge, centered content and an
+ * optional right rail. Below lg the library moves into a slide-in sheet; the rail shows from xl.
  */
-export function LibraryLayout({ active, children }: { active: LibrarySection; children: React.ReactNode }) {
-  const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
+export function LibraryLayout({
+  active,
+  rail,
+  children,
+}: {
+  active: LibrarySection;
+  rail?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <div
       className={cn(
-        "lg:grid lg:gap-6 xl:gap-8",
-        collapsed ? "lg:grid-cols-1" : "lg:grid-cols-[14rem_minmax(0,1fr)] 2xl:grid-cols-[15rem_minmax(0,1fr)]"
+        "min-h-[calc(100dvh-3rem)] lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]",
+        rail && "xl:grid-cols-[15rem_minmax(0,1fr)_19rem] 2xl:grid-cols-[16rem_minmax(0,1fr)_21rem]"
       )}
     >
-      {!collapsed && (
-        <aside className="hidden border-r border-border/70 pr-4 lg:block">
-          <div className="sticky top-16 max-h-[calc(100dvh-5rem)] overflow-y-auto pb-4">
-            <div className="mb-3 flex items-center justify-between px-2">
-              <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Library className="size-4 text-primary" />
-                Library
-              </span>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => toggleCollapsed(true)}
-                aria-label="Hide library sidebar"
-                title="Hide sidebar"
-              >
-                <PanelLeftClose />
-              </Button>
-            </div>
-            <LibraryNav active={active} />
+      <aside className="hidden border-r lg:block">
+        <div className="sticky top-12 h-[calc(100dvh-3rem)] overflow-y-auto px-3 py-4">
+          <LibraryNav active={active} />
+        </div>
+      </aside>
+
+      <main className="min-w-0 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+        <div className="mx-auto w-full max-w-[66rem]">
+          <div className="mb-4 lg:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border"
+              onClick={() => setSheetOpen(true)}
+              aria-label="Open library"
+            >
+              <PanelLeftOpen />
+              Library
+            </Button>
+          </div>
+          {children}
+        </div>
+      </main>
+
+      {rail && (
+        <aside className="hidden xl:block" aria-label="Your progress">
+          <div className="sticky top-12 h-[calc(100dvh-3rem)] space-y-3 overflow-y-auto py-6 pr-4 2xl:pr-6">
+            {rail}
           </div>
         </aside>
       )}
-
-      <div className="min-w-0">
-        <div className={cn("mb-4 flex", collapsed ? "lg:flex" : "lg:hidden")}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border"
-            onClick={() => (window.matchMedia("(min-width: 1024px)").matches ? toggleCollapsed(false) : setSheetOpen(true))}
-            aria-label="Open library"
-          >
-            <PanelLeftOpen />
-            Library
-          </Button>
-        </div>
-        {children}
-      </div>
 
       <Dialog open={sheetOpen} onOpenChange={setSheetOpen} title="Library" variant="sheet-left">
         <LibraryNav active={active} onNavigate={() => setSheetOpen(false)} />

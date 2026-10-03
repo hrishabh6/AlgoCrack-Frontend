@@ -10,7 +10,7 @@ import { ProblemsPagination } from "@/components/problems/problems-pagination";
 import { TopicChips } from "@/components/problems/topic-chips";
 import { LibraryLayout } from "@/components/problems/library-sidebar";
 import { hasActiveFilters, toQuestionFilters, useProblemFilters } from "@/components/problems/use-problem-filters";
-import { EmptyState, PageContainer, PageHeader } from "@/components/shared";
+import { EmptyState, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { useProblemLibraryStore } from "@/store/useProblemLibraryStore";
 import type { PaginatedResponse, QuestionSummary, TagCount } from "@/types";
@@ -83,8 +83,7 @@ function ProblemsPageContent() {
   const filtered = hasActiveFilters(filters);
 
   return (
-    <PageContainer>
-      <LibraryLayout active={{ kind: "all" }}>
+    <LibraryLayout active={{ kind: "all" }}>
         <PageHeader
           title="Problems"
           meta={
@@ -173,8 +172,7 @@ function ProblemsPageContent() {
             </div>
           )}
         </div>
-      </LibraryLayout>
-    </PageContainer>
+    </LibraryLayout>
   );
 }
 
@@ -182,9 +180,9 @@ export default function ProblemsPage() {
   return (
     <Suspense
       fallback={
-        <PageContainer>
+        <div className="mx-auto w-full max-w-[66rem] px-4 py-6 sm:px-6 lg:px-8">
           <ProblemsTableSkeleton />
-        </PageContainer>
+        </div>
       }
     >
       <ProblemsPageContent />

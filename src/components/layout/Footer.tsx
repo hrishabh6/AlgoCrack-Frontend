@@ -13,12 +13,8 @@ const footerLinks = [
 export function Footer() {
   const pathname = usePathname();
 
-  // Hide footer on problem pages where the editor takes full height
-  if (
-    pathname.startsWith("/problems/") &&
-    !pathname.startsWith("/problems/lists") &&
-    pathname.split("/").length > 2
-  ) {
+  // The coding workspace and the problem browser are full-height app views without a footer.
+  if (pathname.startsWith("/problems")) {
     return null;
   }
 
