@@ -4,25 +4,13 @@ import { Button } from "@/components/ui/button";
 import { DifficultyBadge } from "@/components/shared";
 import type { DailyChallengeResponse } from "@/types/daily-challenge";
 import { cn } from "@/lib/utils";
+import { DailyChallengeLocalReset } from "./DailyChallengeLocalReset";
 
 type DailyChallengeCardProps = {
   challenge: DailyChallengeResponse | null;
   compact?: boolean;
   className?: string;
 };
-
-function formatUtcReset(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat(undefined, {
-      timeZone: "UTC",
-      hour: "numeric",
-      minute: "2-digit",
-      timeZoneName: "short",
-    }).format(new Date(iso));
-  } catch {
-    return "00:00 UTC";
-  }
-}
 
 export function DailyChallengeCard({ challenge, compact, className }: DailyChallengeCardProps) {
   if (!challenge) {
@@ -53,7 +41,8 @@ export function DailyChallengeCard({ challenge, compact, className }: DailyChall
               Daily Challenge
             </h2>
             <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-              {challengeDate} · resets {formatUtcReset(nextResetAt)}
+              {challengeDate} ·{" "}
+              <DailyChallengeLocalReset nextResetAt={nextResetAt} label="resets" />
             </p>
           </div>
         </div>
@@ -98,7 +87,8 @@ export function DailyChallengeCard({ challenge, compact, className }: DailyChall
           </div>
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             <CalendarClock className="size-3.5 shrink-0" aria-hidden="true" />
-            UTC date {challengeDate} · next reset {formatUtcReset(nextResetAt)}
+            Challenge day {challengeDate} (UTC) ·{" "}
+            <DailyChallengeLocalReset nextResetAt={nextResetAt} label="New challenge at" />
           </p>
         </div>
         <Button asChild size="lg" className="shrink-0">

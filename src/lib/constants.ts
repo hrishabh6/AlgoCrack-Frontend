@@ -42,6 +42,10 @@ export const ENDPOINTS = {
 
   // Daily challenge (public read)
   DAILY_CHALLENGES: "/api/v1/daily-challenges",
+
+  // Progress & gamification (authenticated)
+  PROGRESS: "/api/v1/progress",
+  LEADERBOARD: "/api/v1/leaderboard",
 } as const;
 
 // Difficulty colors

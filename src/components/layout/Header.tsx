@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/store";
 import { cn } from "@/lib/utils";
-import { User, LogOut, Sun, Moon, Menu, ListChecks, History } from "lucide-react";
+import { User, LogOut, Sun, Moon, Menu, ListChecks, History, Trophy } from "lucide-react";
 import { ProblemActions } from "@/components/problems/problem-actions";
 import { BrandMark, SHELL_CLASS } from "@/components/shared";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +25,7 @@ import { StreakBadge } from "./StreakBadge";
 const navLinks = [
   { href: "/problems", label: "Problems", icon: ListChecks },
   { href: "/submissions", label: "Submissions", icon: History },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
 function isProblemWorkspace(pathname: string) {

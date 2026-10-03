@@ -7,7 +7,10 @@ import { apiClient } from "@/lib/api-client";
 import { ENDPOINTS } from "@/lib/constants";
 import { normalizeUnknownError } from "@/lib/error-utils";
 import { UserProfileResponse } from "@/types";
+import type { UserBadgesResponse, UserProgressResponse } from "@/types/progress";
 import { UserCard } from "./UserCard";
+import { RankProgressCard } from "./RankProgressCard";
+import { ProfileBadgesSection } from "./ProfileBadgesSection";
 import { StatsCard } from "./StatsCard";
 import { RecentSubmissions } from "./RecentSubmissions";
 import { ContributionHeatmap } from "./ContributionHeatmap";
@@ -21,6 +24,8 @@ import { useStreakStore } from "@/store/useStreakStore";
 export function ProfilePage() {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+    const [progress, setProgress] = useState<UserProgressResponse | null>(null);
+    const [badges, setBadges] = useState<UserBadgesResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const streak = useStreakStore((s) => s.streak);
@@ -42,6 +47,20 @@ export function ProfilePage() {
                     `${ENDPOINTS.USER_PROFILE}/${uid}?page=0&size=10`
                 );
                 setProfile(data);
+                try {
+                    const [progressData, badgesData] = await Promise.all([
+                        apiClient.get<UserProgressResponse>(
+                            `${ENDPOINTS.PROGRESS}/${uid}?includeLeaderboardPosition=true`
+                        ),
+                        apiClient.get<UserBadgesResponse>(`${ENDPOINTS.PROGRESS}/${uid}/badges`),
+                    ]);
+                    setProgress(progressData);
+                    setBadges(badgesData);
+                } catch (progressErr) {
+                    console.warn("Progress API unavailable:", progressErr);
+                    setProgress(null);
+                    setBadges(null);
+                }
             } catch (err) {
                 const normalized = normalizeUnknownError(err, "Failed to load profile");
                 if (normalized.message.includes("404")) {
@@ -129,11 +148,18 @@ export function ProfilePage() {
 
     return (
         <PageContainer className="space-y-4 xl:space-y-5">
-            <UserCard user={details} />
+            <UserCard
+                user={details}
+                rankTier={progress?.tier.name}
+                totalScore={progress?.score.total}
+                leaderboardPosition={progress?.leaderboardPosition ?? undefined}
+            />
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
                 {/* Main column */}
                 <div className="min-w-0 space-y-4 xl:space-y-5">
+                    {progress && <RankProgressCard progress={progress} />}
+
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4">
                         <StatCard
                             label="Streak"
@@ -163,6 +189,14 @@ export function ProfilePage() {
                             value={languageStats.length}
                             helper={languageStats.length === 1 ? "language used" : "languages used"}
                         />
+                        {progress && (
+                            <StatCard
+                                label="POTDs"
+                                icon={<CheckCircle2 />}
+                                value={progress.metrics.totalPotdCompleted}
+                                helper={`${progress.metrics.currentPotdStreak}d current streak`}
+                            />
+                        )}
                     </div>
 
                     <section className="rounded-lg border bg-card p-5" aria-label="Solved by difficulty">
@@ -181,6 +215,8 @@ export function ProfilePage() {
 
                 {/* Sidebar */}
                 <aside className="space-y-4 lg:sticky lg:top-16 lg:self-start">
+                    {badges && <ProfileBadgesSection badges={badges} />}
+
                     {details.about && (
                         <SidebarSection title="About">
                             <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
