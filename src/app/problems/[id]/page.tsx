@@ -9,6 +9,21 @@ import { EmptyState } from "@/components/shared";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Search is a substring match on the raw title, and slugs drop punctuation ("k-Group" → "k-group"),
+ * so the de-hyphenated slug may not appear in the title. Fall back to single slug words, longest first.
+ */
+async function findProblemIdBySlug(slug: string): Promise<number | null> {
+    const words = slug.split("-").filter((w) => w.length > 1);
+    const candidates = [slug.replace(/-/g, " "), ...[...words].sort((a, b) => b.length - a.length).slice(0, 3)];
+    for (const search of new Set(candidates)) {
+        const matches = await getQuestions({ search, page: 0, size: 100 });
+        const matched = matches.content.find((q) => slugify(q.questionTitle) === slug);
+        if (matched) return matched.id;
+    }
+    return null;
+}
+
 export default async function ProblemEditorPage(props: {
     params: Promise<{ id: string }>;
 }) {
@@ -18,12 +33,7 @@ export default async function ProblemEditorPage(props: {
 
     if (problemId === null) {
         try {
-            const query = rawParam.replace(/-/g, " ");
-            const matches = await getQuestions({ search: query, page: 0, size: 100 });
-            const matched = matches.content.find((q) => slugify(q.questionTitle) === rawParam);
-            if (matched) {
-                problemId = matched.id;
-            }
+            problemId = await findProblemIdBySlug(rawParam);
         } catch {
             return notFound();
         }
