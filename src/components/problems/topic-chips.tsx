@@ -11,62 +11,20 @@ interface TopicChipsProps {
   tags: TagCount[] | null;
   selected: string[];
   onToggle: (tag: string) => void;
-  onClear: () => void;
-  /** How many topics to show before "More". */
-  collapsedCount?: number;
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  count?: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-        active
-          ? "border-primary/50 bg-primary/12 text-primary"
-          : "border-border bg-surface text-muted-foreground hover:border-border-strong hover:bg-accent hover:text-foreground"
-      )}
-    >
-      {children}
-      {count !== undefined && (
-        <span
-          className={cn(
-            "font-mono text-[10px] tabular-nums",
-            active ? "text-primary/80" : "text-subtle-foreground"
-          )}
-        >
-          {count}
-        </span>
-      )}
-    </button>
-  );
 }
 
 /**
- * Topic discovery row. Shows the most used topics (counts from the backend), always keeps
- * selected topics visible, and expands to every topic on demand.
+ * Topic discovery row: every topic with its real problem count on one line, expandable to all
+ * topics. Selected topics are highlighted and always listed first so they stay visible.
  */
-export function TopicChips({ tags, selected, onToggle, onClear, collapsedCount = 8 }: TopicChipsProps) {
+export function TopicChips({ tags, selected, onToggle }: TopicChipsProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (tags === null) {
     return (
-      <div className="flex gap-2 overflow-hidden" aria-busy="true" aria-label="Loading topics">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <Skeleton key={i} className="h-7 shrink-0 rounded-full" style={{ width: `${64 + ((i * 29) % 48)}px` }} />
+      <div className="flex h-6 items-center gap-5 overflow-hidden" aria-busy="true" aria-label="Loading topics">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-3.5 shrink-0" style={{ width: `${48 + ((i * 29) % 40)}px` }} />
         ))}
       </div>
     );
@@ -75,54 +33,55 @@ export function TopicChips({ tags, selected, onToggle, onClear, collapsedCount =
   const populated = tags.filter((t) => t.problemCount > 0 || selected.includes(t.name));
   if (populated.length === 0) return null;
 
-  const top = populated.slice(0, collapsedCount);
-  const hiddenSelected = populated.slice(collapsedCount).filter((t) => selected.includes(t.name));
-  const visible = expanded ? populated : [...top, ...hiddenSelected];
-  const hiddenCount = populated.length - visible.length;
-  const canExpand = populated.length > collapsedCount;
+  const ordered = [
+    ...populated.filter((t) => selected.includes(t.name)),
+    ...populated.filter((t) => !selected.includes(t.name)),
+  ];
 
   return (
-    <div role="group" aria-label="Filter by topic">
+    <div role="group" aria-label="Filter by topic" className="flex items-start gap-3">
       <div
         className={cn(
-          "flex gap-2",
-          expanded
-            ? "flex-wrap"
-            : "-mx-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden"
+          "flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2",
+          !expanded && "h-6 overflow-hidden"
         )}
       >
-        <Chip active={selected.length === 0} onClick={onClear}>
-          All topics
-        </Chip>
-        {visible.map((tag) => (
-          <Chip
-            key={tag.id}
-            active={selected.includes(tag.name)}
-            onClick={() => onToggle(tag.name)}
-            count={tag.problemCount}
-          >
-            {tag.name}
-          </Chip>
-        ))}
-        {canExpand && (
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-          >
-            {expanded ? (
-              <>
-                Less <ChevronUp className="size-3.5" />
-              </>
-            ) : (
-              <>
-                {hiddenCount > 0 ? `${hiddenCount} more` : "More"} <ChevronDown className="size-3.5" />
-              </>
-            )}
-          </button>
-        )}
+        {ordered.map((tag) => {
+          const active = selected.includes(tag.name);
+          return (
+            <button
+              key={tag.id}
+              type="button"
+              onClick={() => onToggle(tag.name)}
+              aria-pressed={active}
+              className={cn(
+                "inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded text-[13px] transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                active ? "font-medium text-primary" : "text-foreground/85 hover:text-primary"
+              )}
+            >
+              {tag.name}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[11px] tabular-nums",
+                  active ? "bg-primary/15 text-primary" : "bg-muted text-subtle-foreground"
+                )}
+              >
+                {tag.problemCount}
+              </span>
+            </button>
+          );
+        })}
       </div>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="inline-flex h-6 shrink-0 items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      >
+        {expanded ? "Collapse" : "Expand"}
+        {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+      </button>
     </div>
   );
 }
