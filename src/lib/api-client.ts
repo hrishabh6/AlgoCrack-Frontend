@@ -5,6 +5,13 @@ type RequestConfig = RequestInit & {
   skipAuth?: boolean;
 };
 
+function createRequestId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -27,6 +34,7 @@ class ApiClient {
         ...customConfig,
         headers: {
           "Content-Type": "application/json",
+          "X-Request-ID": createRequestId(),
           ...authHeaders,
           ...headers,
         },
