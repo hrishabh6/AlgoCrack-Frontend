@@ -2,27 +2,10 @@
 
 import { useSubmissionStore } from "@/store";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle2, XCircle, Terminal, Clock, Database } from "lucide-react";
+import { CheckCircle2, XCircle, Activity, Clock, Database, AlertTriangle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-
-// Helper to convert verdict codes to user-friendly labels
-function getVerdictLabel(verdict: string | null | undefined): string | null {
-    if (!verdict) return null;
-    
-    const labels: Record<string, string> = {
-        "ACCEPTED": "Accepted",
-        "PASSED_RUN": "All Tests Passed",
-        "WRONG_ANSWER": "Wrong Answer",
-        "FAILED_RUN": "Tests Failed",
-        "RUNTIME_ERROR": "Runtime Error",
-        "TIME_LIMIT_EXCEEDED": "Time Limit Exceeded",
-        "COMPILATION_ERROR": "Compilation Error",
-        "INTERNAL_ERROR_RUN": "Internal Error",
-    };
-    
-    return labels[verdict] || verdict;
-}
+import { getVerdictMeta, formatMemoryKb } from "@/lib/verdict";
+import { EmptyState, StatCard, TONE_TEXT } from "@/components/shared";
 
 export function SubmissionResult() {
     const {
@@ -31,111 +14,123 @@ export function SubmissionResult() {
         memoryKb,
         errorMessage,
         testCaseResults,
-        submissionStatus
+        submissionStatus,
+        passedTestCases,
+        totalTestCases,
+        isRunning,
+        isSubmitting,
     } = useSubmissionStore();
 
     if (!verdict && !submissionStatus) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
-                <p>Run code to see results.</p>
-            </div>
+            <EmptyState
+                icon={<Activity />}
+                title="No results yet"
+                description="Run or submit your code to see the verdict here."
+                className="h-full"
+            />
         );
     }
 
-    // Success verdicts (both SUBMIT and RUN)
-    const successVerdicts = ["ACCEPTED", "PASSED_RUN"];
-    const errorVerdicts = ["WRONG_ANSWER", "FAILED_RUN", "RUNTIME_ERROR", "TIME_LIMIT_EXCEEDED", "COMPILATION_ERROR", "INTERNAL_ERROR_RUN"];
-
-    const isSuccess = verdict && successVerdicts.includes(verdict);
-    const isError = verdict && errorVerdicts.includes(verdict);
+    const meta = getVerdictMeta(verdict, submissionStatus);
+    const pending = !verdict && (isRunning || isSubmitting);
+    const Icon = pending
+        ? Loader2
+        : meta.tone === "success"
+          ? CheckCircle2
+          : meta.tone === "warning"
+            ? AlertTriangle
+            : meta.tone === "danger"
+              ? XCircle
+              : Activity;
+    const label = pending ? (isSubmitting ? "Judging…" : "Running…") : meta.label;
+    const hasCounts = typeof passedTestCases === "number" && typeof totalTestCases === "number";
 
     return (
         <ScrollArea className="h-full">
-            <div className="p-4 space-y-6">
+            <div className="space-y-4 p-5">
                 {/* Status Header */}
-                <div className={cn(
-                    "rounded-lg border p-4",
-                    isSuccess ? "bg-green-500/10 border-green-500/20" : isError ? "bg-red-500/10 border-red-500/20" : "bg-muted"
-                )}>
-                    <div className="flex items-center gap-2 mb-2">
-                        {isSuccess ? (
-                            <CheckCircle2 className="h-6 w-6 text-green-500" />
-                        ) : isError ? (
-                            <XCircle className="h-6 w-6 text-red-500" />
-                        ) : (
-                            <Terminal className="h-6 w-6 text-muted-foreground" />
-                        )}
-                        <h2 className={cn(
-                            "text-xl font-bold",
-                            isSuccess ? "text-green-500" : isError ? "text-red-500" : "text-foreground"
-                        )}>
-                            {getVerdictLabel(verdict) || submissionStatus || "Processing..."}
+                <div
+                    className={cn(
+                        "rounded-lg border p-4",
+                        meta.tone === "success" && "border-success/25 bg-success/8",
+                        meta.tone === "danger" && "border-destructive/25 bg-destructive/8",
+                        meta.tone === "warning" && "border-warning/25 bg-warning/8",
+                        (meta.tone === "info" || meta.tone === "muted") && "bg-muted/50"
+                    )}
+                    role="status"
+                >
+                    <div className="flex items-center gap-2">
+                        <Icon className={cn("size-5", TONE_TEXT[meta.tone], pending && "animate-spin")} aria-hidden="true" />
+                        <h2 className={cn("text-lg font-semibold tracking-tight", TONE_TEXT[meta.tone])}>
+                            {label}
                         </h2>
+                        {hasCounts && (
+                            <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">
+                                {passedTestCases}/{totalTestCases} passed
+                            </span>
+                        )}
                     </div>
                     {errorMessage && (
-                        <div className="mt-2 text-sm font-mono whitespace-pre-wrap text-destructive">
+                        <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-md border border-destructive/20 bg-background/60 p-2.5 font-mono text-xs text-destructive">
                             {errorMessage}
-                        </div>
+                        </pre>
                     )}
                 </div>
 
                 {/* Stats Grid */}
                 {(runtimeMs !== null || memoryKb !== null) && (
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-lg border bg-card p-4">
-                            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                <Clock className="h-4 w-4" />
-                                <span className="text-sm font-medium">Runtime</span>
-                            </div>
-                            <div className="text-2xl font-bold">
-                                {runtimeMs} <span className="text-sm font-normal text-muted-foreground">ms</span>
-                            </div>
-                        </div>
-                        <div className="rounded-lg border bg-card p-4">
-                            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                <Database className="h-4 w-4" />
-                                <span className="text-sm font-medium">Memory</span>
-                            </div>
-                            <div className="text-2xl font-bold">
-                                {(memoryKb ? memoryKb / 1024 : 0).toFixed(2)} <span className="text-sm font-normal text-muted-foreground">MB</span>
-                            </div>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <StatCard
+                            label="Runtime"
+                            icon={<Clock />}
+                            value={
+                                <>
+                                    {runtimeMs ?? "—"}
+                                    <span className="ml-1 text-sm font-normal text-muted-foreground">ms</span>
+                                </>
+                            }
+                        />
+                        <StatCard
+                            label="Memory"
+                            icon={<Database />}
+                            value={
+                                <>
+                                    {(memoryKb ? memoryKb / 1024 : 0).toFixed(2)}
+                                    <span className="ml-1 text-sm font-normal text-muted-foreground">MB</span>
+                                </>
+                            }
+                            helper={formatMemoryKb(memoryKb) ? undefined : "Not reported"}
+                        />
                     </div>
                 )}
 
                 {/* Test Cases Breakdown */}
                 {testCaseResults && testCaseResults.length > 0 && (
-                    <div className="space-y-3">
-                        <h3 className="font-semibold text-lg">Test Cases</h3>
-                        <div className="grid grid-cols-1 gap-2">
+                    <section className="space-y-2">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Test cases</h3>
+                        <ul className="divide-y overflow-hidden rounded-lg border bg-card">
                             {testCaseResults.map((tc, idx) => (
-                                <div key={idx} className={cn(
-                                    "flex items-center justify-between p-3 rounded-md border",
-                                    tc.passed ? "border-green-500/20 bg-green-500/5" : "border-red-500/20 bg-red-500/5"
-                                )}>
+                                <li key={idx} className="flex items-center justify-between px-3 py-2 text-sm">
                                     <div className="flex items-center gap-3">
-                                        <Badge variant={tc.passed ? "secondary" : "destructive"}>
-                                            Case {idx + 1}
-                                        </Badge>
-                                        <span className="text-sm text-muted-foreground">
-                                            {tc.executionTimeMs}ms
+                                        <span className="font-medium">Case {idx + 1}</span>
+                                        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                                            {tc.executionTimeMs} ms
                                         </span>
                                     </div>
-                                    <div className="text-sm font-medium">
-                                        {tc.passed ? (
-                                            <span className="text-green-500 flex items-center gap-1">
-                                                <CheckCircle2 className="h-4 w-4" /> Passed
-                                            </span>
-                                        ) : (
-                                            <span className="text-red-500 flex items-center gap-1">
-                                                <XCircle className="h-4 w-4" /> Failed
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                                    {tc.passed ? (
+                                        <span className="flex items-center gap-1 text-xs font-medium text-success">
+                                            <CheckCircle2 className="size-3.5" aria-hidden="true" /> Passed
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1 text-xs font-medium text-destructive">
+                                            <XCircle className="size-3.5" aria-hidden="true" /> Failed
+                                        </span>
+                                    )}
+                                </li>
                             ))}
-                        </div>
-                    </div>
+                        </ul>
+                    </section>
                 )}
             </div>
         </ScrollArea>

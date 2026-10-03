@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2, Github, Twitter } from "lucide-react";
+import { BrandMark } from "@/components/shared";
+
+const footerLinks = [
+  { href: "/problems", label: "Problems" },
+  { href: "/submissions", label: "Submissions" },
+  { href: "/profile", label: "Profile" },
+];
 
 export function Footer() {
   const pathname = usePathname();
@@ -13,30 +19,24 @@ export function Footer() {
   }
 
   return (
-    <footer className="border-t border-border/20 bg-background opacity-60 hover:opacity-100 transition-opacity">
-      <div className="flex flex-col items-center justify-between gap-4 py-4 md:h-14 md:flex-row md:py-0 w-full px-4">
-        {/* Footer content */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Code2 className="h-4 w-4" />
-          <span>© 2024 AlgoCrack. All rights reserved.</span>
+    <footer className="border-t">
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <BrandMark showWordmark={false} className="opacity-80" />
+          <span>© {new Date().getFullYear()} AlgoCrack</span>
         </div>
-        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-          <Link href="/about" className="transition-colors hover:text-foreground">About</Link>
-          <Link href="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>
-          <Link href="/terms" className="transition-colors hover:text-foreground">Terms</Link>
+        <nav aria-label="Footer" className="flex items-center gap-5 text-xs text-muted-foreground">
+          {footerLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
-        <div className="flex items-center gap-4">
-          <Link href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-foreground">
-            <Github className="h-5 w-5" />
-            <span className="sr-only">GitHub</span>
-          </Link>
-          <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-foreground">
-            <Twitter className="h-5 w-5" />
-            <span className="sr-only">Twitter</span>
-          </Link>
-        </div>
       </div>
     </footer>
   );
 }
-

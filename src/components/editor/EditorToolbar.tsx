@@ -1,6 +1,5 @@
 "use client";
 
-// Button component removed as it's not used in this file
 import {
     Select,
     SelectContent,
@@ -9,13 +8,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { AlignLeft } from "lucide-react";
-import { useEditorStore, useUserStore } from "@/store";
+import { AlignLeft, Code2 } from "lucide-react";
+import { useEditorStore } from "@/store";
 import { SUPPORTED_LANGUAGES } from "@/lib/constants";
+import { ProblemActions } from "@/components/problems/problem-actions";
 
 export function EditorToolbar() {
     const { language, setLanguage, editorRef } = useEditorStore();
-    const { theme } = useUserStore();
 
     const handleFormat = () => {
         if (editorRef) {
@@ -24,11 +23,15 @@ export function EditorToolbar() {
     };
 
     return (
-        <div className="flex items-center justify-between border-b bg-background p-2">
+        <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b bg-surface-2 px-2">
             <div className="flex items-center gap-2">
+                <span className="hidden items-center gap-1.5 pl-1 text-xs font-medium text-muted-foreground sm:flex">
+                    <Code2 className="size-3.5 text-primary" aria-hidden="true" />
+                    Code
+                </span>
                 <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="h-8 w-[140px]">
-                        <SelectValue placeholder="Select Language" />
+                    <SelectTrigger size="sm" className="h-7 w-[112px] text-xs" aria-label="Language">
+                        <SelectValue placeholder="Language" />
                     </SelectTrigger>
                     <SelectContent>
                         {SUPPORTED_LANGUAGES.map((lang) => (
@@ -39,18 +42,22 @@ export function EditorToolbar() {
                     </SelectContent>
                 </Select>
             </div>
-            
-            <div className="flex items-center gap-2">
-                 <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8" 
+
+            <div className="flex items-center gap-1">
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-7"
                     onClick={handleFormat}
-                    title="Format Code"
+                    title="Format code"
+                    aria-label="Format code"
                     disabled={!editorRef}
                 >
-                    <AlignLeft className="h-4 w-4" />
+                    <AlignLeft />
                 </Button>
+                <div className="md:hidden">
+                    <ProblemActions />
+                </div>
             </div>
         </div>
     );

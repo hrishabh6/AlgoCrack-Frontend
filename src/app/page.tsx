@@ -1,108 +1,187 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Code2, Zap, Trophy, Users } from "lucide-react";
+import { ArrowRight, FlaskConical, History, Languages, Play, Send, ShieldCheck } from "lucide-react";
+import { SUPPORTED_LANGUAGES } from "@/lib/constants";
+
+const languageList = SUPPORTED_LANGUAGES.map((l) => l.label).join(" and ");
+
+const features = [
+  {
+    icon: FlaskConical,
+    title: "Run against sample cases",
+    description:
+      "Execute your code on the problem's sample inputs, edit them, or add your own cases before submitting.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Judged on hidden tests",
+    description:
+      "Submissions are graded against hidden test cases with runtime and memory reported per run.",
+  },
+  {
+    icon: Languages,
+    title: `${languageList} support`,
+    description:
+      "Write solutions in a Monaco-powered editor with syntax highlighting, formatting, and saved drafts.",
+  },
+  {
+    icon: History,
+    title: "Track your history",
+    description:
+      "Review every submission, see solved counts by difficulty, and follow your activity over the year.",
+  },
+];
+
+const steps = [
+  { label: "Pick a problem", detail: "Filter by difficulty, tag, or search by title." },
+  { label: "Run your code", detail: "Iterate quickly on sample and custom inputs." },
+  { label: "Submit", detail: "Get an official verdict with runtime and memory." },
+];
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
-        <div className="w-full px-4 relative z-10">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              Master{" "}
-              <span className="text-primary">Coding Interviews</span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground md:text-xl">
-              Practice algorithmic problems, sharpen your skills, and ace your
-              next technical interview. Join thousands of developers preparing
-              with AlgoCrack.
+      <section className="border-b">
+        <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-[1.05fr_1fr]">
+          <div className="max-w-xl">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-md border bg-surface px-2 py-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
+              Interview practice
             </p>
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Button asChild size="lg" className="text-base">
+            <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-5xl">
+              Solve problems.
+              <br />
+              <span className="text-primary">Ship clean solutions.</span>
+            </h1>
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Practice algorithmic problems in a focused editor, run them against test cases, and
+              get judged on hidden tests — all in one workspace.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg">
                 <Link href="/problems">
-                  Start Practicing
+                  Start practicing
+                  <ArrowRight />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="text-base">
-                <Link href="/about">
-                  Learn More
-                </Link>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/auth/signup">Create an account</Link>
               </Button>
             </div>
           </div>
+
+          <EditorPreview />
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="border-t bg-muted/30 py-20">
-        <div className="w-full px-4">
-          <h2 className="text-center text-3xl font-bold">
-            Why Choose AlgoCrack?
-          </h2>
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            <FeatureCard
-              icon={<Code2 className="h-8 w-8" />}
-              title="Real Interview Problems"
-              description="Practice with problems asked at top tech companies like Google, Meta, and Amazon."
-            />
-            <FeatureCard
-              icon={<Zap className="h-8 w-8" />}
-              title="Instant Feedback"
-              description="Get real-time results with detailed execution metrics and test case analysis."
-            />
-            <FeatureCard
-              icon={<Trophy className="h-8 w-8" />}
-              title="Track Progress"
-              description="Monitor your improvement with submission history and statistics."
-            />
-            <FeatureCard
-              icon={<Users className="h-8 w-8" />}
-              title="Multi-Language Support"
-              description="Code in Java, Python, and more languages with full syntax highlighting."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="w-full px-4">
-          <div className="mx-auto max-w-2xl rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 p-8 text-center md:p-12">
-            <h2 className="text-2xl font-bold md:text-3xl">
-              Ready to Level Up?
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              Start solving problems today and take your coding skills to the
-              next level.
+      <section className="border-b">
+        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
+          <div className="max-w-2xl">
+            <h2 className="text-xl font-semibold tracking-tight">Built around the practice loop</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Everything you need to go from reading a problem to an accepted solution.
             </p>
-            <Button asChild size="lg" className="mt-6">
-              <Link href="/problems">
-                Browse Problems
-              </Link>
-            </Button>
           </div>
+          <div className="mt-10 grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            {features.map((feature) => (
+              <div key={feature.title} className="bg-card p-5">
+                <feature.icon className="size-5 text-primary" aria-hidden="true" />
+                <h3 className="mt-4 text-sm font-semibold">{feature.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-16 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <ol className="grid flex-1 gap-6 sm:grid-cols-3">
+            {steps.map((step, index) => (
+              <li key={step.label} className="flex gap-3">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-surface font-mono text-xs text-primary">
+                  {index + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-medium">{step.label}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{step.detail}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <Button asChild size="lg" className="self-start lg:self-auto">
+            <Link href="/problems">
+              Browse problems
+              <ArrowRight />
+            </Link>
+          </Button>
         </div>
       </section>
     </div>
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
+const previewLines: Array<Array<[string, string?]>> = [
+  [["class ", "text-selected"], ["Solution", "text-warning"], [" {"]],
+  [["  public int", "text-selected"], ["[] "], ["twoSum", "text-info"], ["(int[] nums, int target) {"]],
+  [["    Map", "text-warning"], ["<Integer, Integer> seen = "], ["new ", "text-selected"], ["HashMap<>();"]],
+  [["    for ", "text-selected"], ["(int i = 0; i < nums.length; i++) {"]],
+  [["      int ", "text-selected"], ["need = target - nums[i];"]],
+  [["      if ", "text-selected"], ["(seen.containsKey(need))"]],
+  [["        return ", "text-selected"], ["new int", "text-selected"], ["[]{seen.get(need), i};"]],
+  [["      seen.put(nums[i], i);"]],
+  [["    }"]],
+  [["    return ", "text-selected"], ["new int", "text-selected"], ["[0];"]],
+  [["  }"]],
+  [["}"]],
+];
+
+function EditorPreview() {
   return (
-    <div className="rounded-lg border bg-card p-6 transition-shadow hover:shadow-md">
-      <div className="text-primary">{icon}</div>
-      <h3 className="mt-4 font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <div
+      aria-hidden="true"
+      className="relative overflow-hidden rounded-lg border bg-card shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)]"
+    >
+      <div className="flex h-10 items-center justify-between border-b bg-surface-2 px-3">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="rounded border bg-muted px-1.5 py-0.5 font-mono">Java</span>
+          <span className="font-mono">Solution.java</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-flex h-6 items-center gap-1 rounded-md border px-2 text-[11px] text-muted-foreground">
+            <Play className="size-3" /> Run
+          </span>
+          <span className="inline-flex h-6 items-center gap-1 rounded-md bg-primary px-2 text-[11px] font-medium text-primary-foreground">
+            <Send className="size-3" /> Submit
+          </span>
+        </div>
+      </div>
+      <pre className="overflow-x-auto px-0 py-3 font-mono text-[12.5px] leading-6">
+        {previewLines.map((tokens, i) => (
+          <div key={i} className="flex">
+            <span className="w-10 shrink-0 select-none pr-3 text-right text-subtle-foreground">
+              {i + 1}
+            </span>
+            <code className="whitespace-pre text-foreground/90">
+              {tokens.map(([text, cls], j) => (
+                <span key={j} className={cls}>
+                  {text}
+                </span>
+              ))}
+            </code>
+          </div>
+        ))}
+      </pre>
+      <div className="flex items-center gap-3 border-t bg-surface-2 px-3 py-2 font-mono text-[11px]">
+        <span className="inline-flex items-center gap-1.5 text-success">
+          <span className="size-1.5 rounded-full bg-success" />
+          Accepted
+        </span>
+        <span className="text-muted-foreground">runtime 2 ms</span>
+        <span className="text-muted-foreground">memory 44.1 MB</span>
+      </div>
     </div>
   );
 }

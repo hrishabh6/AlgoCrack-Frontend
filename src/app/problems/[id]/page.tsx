@@ -3,6 +3,9 @@ import { EditorLayout } from "@/components/editor/EditorLayout";
 import { notFound } from "next/navigation";
 import { extractProblemId, slugify } from "@/lib/slug-utils";
 import type { TestCase } from "@/types";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -43,11 +46,17 @@ export default async function ProblemEditorPage(props: {
     } catch (error) {
         console.error(`Failed to fetch problem ${problemId}:`, error);
         return (
-            <div className="flex h-screen flex-col items-center justify-center gap-4">
-                <h1 className="text-2xl font-bold">Failed to load problem</h1>
-                <p className="text-muted-foreground">
-                    Could not fetch problem details. Please try again later.
-                </p>
+            <div className="flex min-h-[calc(100dvh-3rem)] items-center justify-center p-6">
+                <EmptyState
+                    tone="error"
+                    title="Failed to load problem"
+                    description="Could not fetch problem details. Please try again later."
+                    action={
+                        <Button asChild variant="outline" size="sm">
+                            <Link href="/problems">Back to problems</Link>
+                        </Button>
+                    }
+                />
             </div>
         );
     }

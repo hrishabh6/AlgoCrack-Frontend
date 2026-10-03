@@ -31,9 +31,9 @@ function OAuthSuccessContent() {
   }, [searchParams, login, router]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-      <p className="text-muted-foreground">Completing secure sign-in...</p>
+    <div className="flex min-h-[calc(100dvh-3rem-73px)] flex-col items-center justify-center gap-3" role="status">
+      <Loader2 className="size-6 animate-spin text-primary" aria-hidden="true" />
+      <p className="text-sm text-muted-foreground">Completing secure sign-in…</p>
     </div>
   );
 }

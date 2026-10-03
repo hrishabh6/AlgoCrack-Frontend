@@ -2,15 +2,22 @@
 
 import { useEditorStore, useSubmissionStore } from "@/store";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle2, XCircle, Plus, RotateCcw, Trash2, List, PlaySquare, Code2, Terminal } from "lucide-react";
+import { Plus, RotateCcw, Trash2, FlaskConical, Terminal, Loader2, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { VERDICT_DISPLAY } from "@/types";
-import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { getVerdictMeta } from "@/lib/verdict";
+import { TONE_TEXT } from "@/components/shared";
+import { workspaceTabTrigger } from "./workspace-styles";
+
+type PanelTab = "cases" | "result";
+
+const caseButton =
+    "inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 text-xs font-medium transition-colors duration-150";
 
 export function TestCasesPanel() {
     const { isAuthenticated } = useAuth();
@@ -27,7 +34,6 @@ export function TestCasesPanel() {
         addTestcase,
         removeTestcase,
         resetTestcase,
-        currentProblem,
     } = useEditorStore();
 
     const {
@@ -35,27 +41,26 @@ export function TestCasesPanel() {
         verdict,
         runtimeMs,
         compilationOutput,
-        errorMessage
+        errorMessage,
+        isRunning,
+        isSubmitting,
     } = useSubmissionStore();
 
     const [newTestcaseInput, setNewTestcaseInput] = useState("");
     const [isAddingNew, setIsAddingNew] = useState(false);
 
-    // Tab state: "cases" (Input) or "result" (Output)
-    // Automatically switch to result tab when verdict changes (run completes)
-    const [activeTab, setActiveTab] = useState<"cases" | "result">("cases");
-
-    useEffect(() => {
-        if (verdict) {
-            setActiveTab("result");
-        } else {
-            setActiveTab("cases");
-        }
-    }, [verdict]);
+    // Switch to the result tab whenever a verdict arrives, back to cases when it clears.
+    const [activeTab, setActiveTab] = useState<PanelTab>(verdict ? "result" : "cases");
+    const [prevVerdict, setPrevVerdict] = useState(verdict);
+    if (verdict !== prevVerdict) {
+        setPrevVerdict(verdict);
+        setActiveTab(verdict ? "result" : "cases");
+    }
 
     const activeTestcase = testcases[activeTestCaseIndex];
     const activeResult = testCaseResults?.find(r => r.index === activeTestCaseIndex);
-    const verdictInfo = verdict ? VERDICT_DISPLAY[verdict] : null;
+    const verdictMeta = verdict ? getVerdictMeta(verdict) : null;
+    const isBusy = isRunning || isSubmitting;
 
     const handleAddTestcase = () => {
         if (newTestcaseInput.trim()) {
@@ -65,149 +70,167 @@ export function TestCasesPanel() {
         }
     };
 
+    const addForm = isAddingNew && (
+        <div className="mb-3 rounded-md border border-dashed border-border-strong bg-muted/40 p-3">
+            <label htmlFor="new-testcase" className="mb-2 block text-xs font-medium text-muted-foreground">
+                New test case input
+            </label>
+            <textarea
+                id="new-testcase"
+                value={newTestcaseInput}
+                onChange={(e) => setNewTestcaseInput(e.target.value)}
+                className="min-h-[64px] w-full resize-y rounded-md border border-input bg-surface p-2 font-mono text-xs outline-none transition-colors focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-ring/25"
+                placeholder='{"nums": [1,2,3], "target": 5}'
+                spellCheck={false}
+                autoFocus
+            />
+            <div className="mt-2 flex gap-2">
+                <Button size="xs" onClick={handleAddTestcase} disabled={!newTestcaseInput.trim()}>
+                    Add case
+                </Button>
+                <Button size="xs" variant="ghost" onClick={() => setIsAddingNew(false)}>
+                    Cancel
+                </Button>
+            </div>
+        </div>
+    );
+
     if (!testcases || testcases.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
-                <p>No test cases available.</p>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => setIsAddingNew(true)}
-                >
-                    <Plus className="h-4 w-4 mr-1" /> Add Test Case
-                </Button>
+            <div className="flex h-full flex-col items-center justify-center p-4 text-sm text-muted-foreground">
+                <div className="w-full max-w-md">
+                    {addForm}
+                </div>
+                {!isAddingNew && (
+                    <>
+                        <p>No test cases available.</p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-3"
+                            onClick={() => setIsAddingNew(true)}
+                        >
+                            <Plus /> Add test case
+                        </Button>
+                    </>
+                )}
             </div>
         );
     }
 
-
-
     return (
-        <div className="flex flex-col h-full bg-background border-t relative">
-            {!isAuthenticated && (
-                <div className="absolute inset-x-0 top-[-40px] z-10 flex items-center justify-center h-10 bg-muted/50 backdrop-blur-sm border-b">
-                </div>
-            )}
-            {!isAuthenticated && (
-                <div className="w-full bg-secondary/30 p-2 text-center text-sm text-muted-foreground border-b">
-                    You need to <Link href={loginUrl} className="text-primary hover:underline font-medium">log in</Link> or <Link href={signupUrl} className="text-primary hover:underline font-medium">sign up</Link> to run or submit
-                </div>
-            )}
+        <div className="flex h-full min-h-0 flex-col">
             {/* Main Tabs (Testcase vs Result) */}
-            <div className="border-b px-2 flex items-center justify-between bg-muted/30">
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-                    <TabsList className="h-9 bg-transparent p-0 w-full justify-start rounded-none">
-                        <TabsTrigger
-                            value="cases"
-                            className="h-9 rounded-none border-b-2 border-transparent px-4 data-[state=active]:border-primary data-[state=active]:bg-background"
-                        >
-                            <Code2 className="h-4 w-4 mr-2" />
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b bg-surface-2 pl-1 pr-2">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as PanelTab)} className="gap-0">
+                    <TabsList className="h-10 justify-start gap-0 rounded-none bg-transparent p-0">
+                        <TabsTrigger value="cases" className={workspaceTabTrigger}>
+                            <FlaskConical />
                             Testcase
                         </TabsTrigger>
-                        <TabsTrigger
-                            value="result"
-                            className={cn(
-                                "h-9 rounded-none border-b-2 border-transparent px-4 data-[state=active]:border-primary data-[state=active]:bg-background",
-                                !verdict && "cursor-not-allowed opacity-50"
-                            )}
-                            disabled={!verdict}
-                        >
-                            <Terminal className="h-4 w-4 mr-2" />
+                        <TabsTrigger value="result" className={workspaceTabTrigger} disabled={!verdict}>
+                            <Terminal />
                             Test Result
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
 
-                {activeTab === "cases" && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => setIsAddingNew(true)}
-                    >
-                        <Plus className="h-3.5 w-3.5 mr-1" /> Add Case
-                    </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {isBusy && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-info" role="status">
+                            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                            {isSubmitting ? "Judging…" : "Running…"}
+                        </span>
+                    )}
+                    {activeTab === "cases" && (
+                        <Button variant="ghost" size="xs" onClick={() => setIsAddingNew(true)}>
+                            <Plus /> Add case
+                        </Button>
+                    )}
+                </div>
             </div>
 
+            {!isAuthenticated && (
+                <div className="flex shrink-0 items-center justify-center gap-2 border-b bg-primary/5 px-3 py-1.5 text-xs text-muted-foreground">
+                    <LogIn className="size-3.5 text-primary" aria-hidden="true" />
+                    <span>
+                        <Link href={loginUrl} className="font-medium text-primary hover:underline">Log in</Link>
+                        {" "}or{" "}
+                        <Link href={signupUrl} className="font-medium text-primary hover:underline">sign up</Link>
+                        {" "}to run or submit
+                    </span>
+                </div>
+            )}
+
             {/* Content Area */}
-            <ScrollArea className="flex-1">
-                <div className="p-4">
+            <ScrollArea className="min-h-0 flex-1">
+                <div className="p-3">
                     {activeTab === "cases" ? (
                         /* Testcase Input View */
-                        <div className="space-y-4">
+                        <div>
                             {/* Case selector tabs */}
-                            <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+                            <div className="mb-3 flex items-center gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Test cases">
                                 {testcases.map((tc, index) => (
                                     <button
                                         key={index}
+                                        role="tab"
+                                        aria-selected={activeTestCaseIndex === index}
                                         onClick={() => setActiveTestCaseIndex(index)}
                                         className={cn(
-                                            "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md whitespace-nowrap transition-colors",
+                                            caseButton,
                                             activeTestCaseIndex === index
-                                                ? "bg-secondary text-secondary-foreground"
-                                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                ? "border-border-strong bg-accent text-foreground"
+                                                : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                                         )}
                                     >
                                         <span>Case {index + 1}</span>
-                                        {tc.isModified && !tc.isUserAdded && <span className="text-orange-400">*</span>}
-                                        {tc.isUserAdded && <span className="text-blue-400 text-xs">(Custom)</span>}
+                                        {tc.isModified && !tc.isUserAdded && (
+                                            <span className="size-1.5 rounded-full bg-primary" title="Modified" aria-label="modified" />
+                                        )}
+                                        {tc.isUserAdded && (
+                                            <span className="rounded bg-selected/15 px-1 text-[10px] font-medium text-selected">custom</span>
+                                        )}
                                     </button>
                                 ))}
                             </div>
 
                             {/* Add New Case Form */}
-                            {isAddingNew && (
-                                <div className="mb-4 p-3 border rounded-lg border-dashed bg-muted/30">
-                                    <p className="text-sm font-medium mb-2">Add New Test Case</p>
-                                    <textarea
-                                        value={newTestcaseInput}
-                                        onChange={(e) => setNewTestcaseInput(e.target.value)}
-                                        className="w-full min-h-[60px] p-2 bg-background border rounded font-mono text-xs"
-                                        placeholder='{"nums": [1,2,3], "target": 5}'
-                                    />
-                                    <div className="flex gap-2 mt-2">
-                                        <Button size="sm" onClick={handleAddTestcase}>Add</Button>
-                                        <Button size="sm" variant="ghost" onClick={() => setIsAddingNew(false)}>Cancel</Button>
-                                    </div>
-                                </div>
-                            )}
+                            {addForm}
 
                             {/* Active Case Editor */}
                             {activeTestcase && (
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-sm font-medium text-muted-foreground">Input</label>
+                                        <label htmlFor="testcase-input" className="text-xs font-medium text-muted-foreground">Input</label>
                                         <div className="flex gap-1">
                                             {activeTestcase.isModified && !activeTestcase.isUserAdded && (
                                                 <Button
                                                     variant="ghost"
-                                                    size="sm"
+                                                    size="xs"
                                                     onClick={() => resetTestcase(activeTestCaseIndex)}
-                                                    className="h-6 px-2 text-xs"
                                                 >
-                                                    <RotateCcw className="h-3 w-3 mr-1" /> Reset
+                                                    <RotateCcw /> Reset
                                                 </Button>
                                             )}
                                             {activeTestcase.isUserAdded && (
                                                 <Button
                                                     variant="ghost"
-                                                    size="sm"
+                                                    size="xs"
                                                     onClick={() => removeTestcase(activeTestCaseIndex)}
-                                                    className="h-6 px-2 text-xs text-red-500 hover:text-red-600"
+                                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                                 >
-                                                    <Trash2 className="h-3 w-3 mr-1" /> Remove
+                                                    <Trash2 /> Remove
                                                 </Button>
                                             )}
                                         </div>
                                     </div>
                                     <textarea
+                                        id="testcase-input"
                                         value={activeTestcase.input}
                                         onChange={(e) => updateTestcaseInput(activeTestCaseIndex, e.target.value)}
                                         className={cn(
-                                            "w-full min-h-[100px] p-3 bg-muted/40 rounded-lg font-mono text-sm border resize-none focus-visible:ring-1",
-                                            activeTestcase.isModified && "border-orange-400/50"
+                                            "min-h-[96px] w-full resize-none rounded-md border border-input bg-muted/50 p-3 font-mono text-[13px] leading-relaxed outline-none transition-colors focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-ring/25",
+                                            activeTestcase.isModified && "border-primary/40"
                                         )}
                                         spellCheck={false}
                                     />
@@ -216,57 +239,51 @@ export function TestCasesPanel() {
                         </div>
                     ) : (
                         /* Test Result View */
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             {/* Verdict Summary */}
-                            <div className="flex items-center gap-4">
-                                {verdictInfo && (
-                                    <h3 className={cn("text-lg font-semibold",
-                                        verdictInfo.color === "green" ? "text-green-500" :
-                                            verdictInfo.color === "red" ? "text-red-500" : "text-orange-500"
-                                    )}>
-                                        {verdictInfo.label}
+                            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                                {verdictMeta && (
+                                    <h3 className={cn("text-base font-semibold", TONE_TEXT[verdictMeta.tone])}>
+                                        {verdictMeta.label}
                                     </h3>
                                 )}
                                 {runtimeMs !== null && runtimeMs !== undefined && (
-                                    <span className="text-sm text-muted-foreground">Runtime: {runtimeMs}ms</span>
+                                    <span className="font-mono text-xs text-muted-foreground">
+                                        Runtime <span className="text-foreground">{runtimeMs} ms</span>
+                                    </span>
                                 )}
                             </div>
 
                             {/* Compilation Error or Runtime Error (Global) */}
                             {errorMessage && !activeResult && (
-                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                                    <h4 className="text-sm font-semibold text-red-500 mb-2">Error</h4>
-                                    <pre className="text-xs font-mono whitespace-pre-wrap text-red-400">{errorMessage}</pre>
-                                </div>
+                                <OutputBlock label="Error" tone="danger">{errorMessage}</OutputBlock>
                             )}
 
                             {compilationOutput && (
-                                <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-                                    <h4 className="text-sm font-semibold text-orange-500 mb-2">Compilation Output</h4>
-                                    <pre className="text-xs font-mono whitespace-pre-wrap">{compilationOutput}</pre>
-                                </div>
+                                <OutputBlock label="Compilation output" tone="warning">{compilationOutput}</OutputBlock>
                             )}
 
                             {/* Result details per case */}
                             {verdict !== "COMPILATION_ERROR" && verdict !== "INTERNAL_ERROR_RUN" && (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {/* Case Tabs for Result */}
-                                    <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Test case results">
                                         {testCaseResults?.map((res, index) => (
                                             <button
                                                 key={index}
+                                                role="tab"
+                                                aria-selected={activeTestCaseIndex === index}
                                                 onClick={() => setActiveTestCaseIndex(index)}
                                                 className={cn(
-                                                    "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md whitespace-nowrap transition-colors",
+                                                    caseButton,
                                                     activeTestCaseIndex === index
-                                                        ? "bg-secondary text-secondary-foreground"
-                                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                        ? "border-border-strong bg-accent text-foreground"
+                                                        : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                                                 )}
                                             >
-                                                {res.passed === true && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
-                                                {res.passed === false && <div className="w-1.5 h-1.5 rounded-full bg-red-500" />}
-                                                {res.passed === null && !res.error && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
-
+                                                {res.passed === true && <span className="size-1.5 rounded-full bg-success" aria-label="passed" />}
+                                                {res.passed === false && <span className="size-1.5 rounded-full bg-destructive" aria-label="failed" />}
+                                                {res.passed === null && !res.error && <span className="size-1.5 rounded-full bg-info" aria-label="not judged" />}
                                                 <span>Case {index + 1}</span>
                                             </button>
                                         ))}
@@ -274,40 +291,22 @@ export function TestCasesPanel() {
 
                                     {/* Active Result Detail */}
                                     {activeResult ? (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                            {/* Input */}
-                                            <div>
-                                                <p className="text-xs font-medium text-muted-foreground mb-1.5">Input</p>
-                                                <pre className="p-3 bg-muted/50 rounded-lg font-mono text-sm overflow-x-auto border">
-                                                    {testcases[activeTestCaseIndex]?.input}
-                                                </pre>
-                                            </div>
-
-                                            {/* Output */}
-                                            <div>
-                                                <p className="text-xs font-medium text-muted-foreground mb-1.5">Output</p>
-                                                <pre className={cn(
-                                                    "p-3 rounded-lg font-mono text-sm overflow-x-auto border",
-                                                    activeResult.passed === true ? "bg-muted/50" : "bg-red-500/5 border-red-500/20"
-                                                )}>
-                                                    {activeResult.actualOutput || <span className="text-muted-foreground italic">(empty)</span>}
-                                                </pre>
-                                            </div>
-
-                                            {/* Expected */}
+                                        <div className="space-y-3 animate-in fade-in duration-150">
+                                            <OutputBlock label="Input">{testcases[activeTestCaseIndex]?.input}</OutputBlock>
+                                            <OutputBlock
+                                                label="Output"
+                                                tone={activeResult.passed === false ? "danger" : undefined}
+                                            >
+                                                {activeResult.actualOutput || <span className="italic text-subtle-foreground">(empty)</span>}
+                                            </OutputBlock>
                                             {activeResult.expectedOutput && (
-                                                <div>
-                                                    <p className="text-xs font-medium text-muted-foreground mb-1.5">Expected</p>
-                                                    <pre className="p-3 bg-muted/50 rounded-lg font-mono text-sm overflow-x-auto border">
-                                                        {activeResult.expectedOutput}
-                                                    </pre>
-                                                </div>
+                                                <OutputBlock label="Expected">{activeResult.expectedOutput}</OutputBlock>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 text-muted-foreground">
+                                        <p className="py-6 text-center text-xs text-muted-foreground">
                                             Select a case to view details
-                                        </div>
+                                        </p>
                                     )}
                                 </div>
                             )}
@@ -315,6 +314,41 @@ export function TestCasesPanel() {
                     )}
                 </div>
             </ScrollArea>
+        </div>
+    );
+}
+
+function OutputBlock({
+    label,
+    tone,
+    children,
+}: {
+    label: string;
+    tone?: "danger" | "warning";
+    children: React.ReactNode;
+}) {
+    return (
+        <div>
+            <p
+                className={cn(
+                    "mb-1 text-xs font-medium",
+                    tone === "danger" ? "text-destructive" : tone === "warning" ? "text-warning" : "text-muted-foreground"
+                )}
+            >
+                {label}
+            </p>
+            <pre
+                className={cn(
+                    "overflow-x-auto whitespace-pre-wrap break-all rounded-md border p-2.5 font-mono text-[13px] leading-relaxed",
+                    tone === "danger"
+                        ? "border-destructive/25 bg-destructive/5 text-foreground"
+                        : tone === "warning"
+                          ? "border-warning/25 bg-warning/5 text-foreground"
+                          : "bg-muted/50 text-foreground"
+                )}
+            >
+                {children}
+            </pre>
         </div>
     );
 }

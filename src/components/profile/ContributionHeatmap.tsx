@@ -5,7 +5,14 @@ import { createPortal } from "react-dom";
 import { apiClient } from "@/lib/api-client";
 import { ENDPOINTS } from "@/lib/constants";
 import { HeatmapResponse } from "@/types";
-import { ChevronDown, Flame } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ContributionHeatmapProps {
     userId: string;
@@ -13,11 +20,11 @@ interface ContributionHeatmapProps {
 
 // ─── Color Buckets ──────────────────────────────────────────────
 const LEVELS = [
-    "#2d333b",
-    "#0e4429",
-    "#006d32",
-    "#26a641",
-    "#39d353",
+    "var(--accent)",
+    "color-mix(in oklab, var(--primary) 28%, var(--accent))",
+    "color-mix(in oklab, var(--primary) 50%, var(--accent))",
+    "color-mix(in oklab, var(--primary) 74%, var(--accent))",
+    "var(--primary)",
 ] as const;
 
 function getLevel(count: number): number {
@@ -96,7 +103,6 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
     const [loading, setLoading] = useState(true);
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
     const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; count: number, flipBelow: boolean } | null>(null);
     const [containerWidth, setContainerWidth] = useState(0);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -249,74 +255,70 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
 
     if (loading || !data) {
         return (
-            <div className="rounded-lg border border-border bg-card p-4 shadow-sm min-h-[120px]">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="h-5 w-48 bg-muted/30 rounded animate-pulse" />
-                    <div className="h-8 w-24 bg-muted/30 rounded animate-pulse" />
+            <div className="space-y-4" aria-busy="true" aria-label="Loading activity">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-7 w-20" />
                 </div>
-                <div className="h-[100px] w-full bg-muted/10 rounded animate-pulse" />
+                <Skeleton className="h-[110px] w-full" />
             </div>
         );
     }
 
+    const yearSelect = (
+        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+            <SelectTrigger size="sm" className="h-7 w-[84px] font-mono text-xs" aria-label="Activity year">
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+                {yearOptions.map((y) => (
+                    <SelectItem key={y} value={String(y)} className="font-mono text-xs">
+                        {y}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+
     return (
-        <div className="rounded-lg border border-border/30 bg-card p-3 shadow-sm">
+        <div>
             {/* ── Stats Row ──────────────────────────────────── */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-2 text-sm">
-                    <span className="text-lg font-medium text-foreground tracking-tight">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-baseline gap-2">
+                    <span className="font-mono text-lg font-semibold tabular-nums tracking-tight text-foreground">
                         {data.totalSubmissions}
                     </span>
-                    <span className="text-muted-foreground text-xs">submissions in {selectedYear}</span>
+                    <span className="text-xs text-muted-foreground">submissions in {selectedYear}</span>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>
-                        Total active days:{" "}
-                        <span className="font-medium text-foreground">{data.totalActiveDays}</span>
+                        Active days{" "}
+                        <span className="font-mono font-medium tabular-nums text-foreground">{data.totalActiveDays}</span>
                     </span>
-                    <span className="flex items-center gap-1">
-                        <Flame className="h-3 w-3 text-orange-500" />
-                        Max streak:{" "}
-                        <span className="font-medium text-foreground">{maxStreak}</span>
+                    <span>
+                        Max streak{" "}
+                        <span className="font-mono font-medium tabular-nums text-foreground">{maxStreak}</span>
                     </span>
-                    <div className="relative">
-                        <button
-                            onClick={() => setDropdownOpen(!dropdownOpen)}
-                            className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-background hover:bg-muted/50 transition-colors text-foreground text-[10px] font-medium"
-                        >
-                            {selectedYear}
-                            <ChevronDown className={`h-3 w-3 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
-                        </button>
-                        {dropdownOpen && (
-                            <div className="absolute right-0 top-full mt-1 min-w-[100px] bg-card border border-border rounded-md shadow-lg z-50 py-1">
-                                {yearOptions.map((y) => (
-                                    <button
-                                        key={y}
-                                        onClick={() => { setSelectedYear(y); setDropdownOpen(false); }}
-                                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted/50 transition-colors ${selectedYear === y ? "text-primary font-semibold" : "text-muted-foreground"}`}
-                                    >
-                                        {y}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    {yearSelect}
                 </div>
             </div>
 
             {/* ── Grid Container ─────────────────────────────── */}
-            <div ref={wrapperRef} className="w-full relative overflow-hidden min-h-[120px]">
-                
-                {/* Debug Overlay */}
+            <div
+                ref={wrapperRef}
+                className="relative min-h-[120px] w-full overflow-hidden"
+                role="img"
+                aria-label={`${data.totalSubmissions} submissions across ${data.totalActiveDays} active days in ${selectedYear}`}
+            >
                 {containerWidth > 0 && weeks.length === 0 && (
-                     <div className="absolute inset-0 flex items-center justify-center text-red-500 text-xs font-mono bg-background/50 z-50">
-                         No Data: {data.from} → {data.to}
-                     </div>
+                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                        No activity data for this period.
+                    </div>
                 )}
 
                 {/* Grid */}
                 {containerWidth > 0 && (
-                    <div className="relative pt-1" style={{ width: totalGridWidth, height: gridHeight + 8, contain: "layout paint" }}>
+                    <div className="relative pt-1" style={{ width: totalGridWidth, height: gridHeight + 8, contain: "layout paint" }} aria-hidden="true">
                         {weeks.map((week, colIdx) => (
                             <div
                                 key={colIdx}
@@ -341,7 +343,7 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
                                                 borderRadius: 2,
                                                 backgroundColor: LEVELS[level],
                                             }}
-                                            className="cursor-pointer origin-center transition-transform duration-100 hover:brightness-125 hover:scale-[1.15]"
+                                            className="origin-center transition-transform duration-100 hover:scale-[1.2] hover:ring-1 hover:ring-foreground/40"
                                             onMouseEnter={(e) => handleMouseEnter(e, day.date, day.count)}
                                             onMouseLeave={handleMouseLeave}
                                         />
@@ -354,11 +356,11 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
 
                 {/* Month labels BELOW grid */}
                 {containerWidth > 0 && (
-                    <div className="relative mt-1" style={{ width: totalGridWidth, height: 16 }}>
+                    <div className="relative mt-1" style={{ width: totalGridWidth, height: 16 }} aria-hidden="true">
                         {monthLabels.map((m, i) => (
                             <span
                                 key={i}
-                                className="absolute text-[9px] text-muted-foreground select-none"
+                                className="absolute select-none text-[10px] text-subtle-foreground"
                                 style={{ left: m.x }}
                             >
                                 {m.label}
@@ -369,12 +371,12 @@ export function ContributionHeatmap({ userId }: ContributionHeatmapProps) {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-end gap-1 mt-2 text-[9px] text-muted-foreground">
-                <span>Less</span>
+            <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-subtle-foreground" aria-hidden="true">
+                <span className="mr-1">Less</span>
                 {LEVELS.map((color, i) => (
-                    <div key={i} style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: color }} />
+                    <div key={i} style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: color }} />
                 ))}
-                <span>More</span>
+                <span className="ml-1">More</span>
             </div>
 
             {/* Tooltip (Fixed with Portal) */}

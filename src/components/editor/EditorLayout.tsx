@@ -12,10 +12,19 @@ import { EditorToolbar } from "./EditorToolbar";
 import { useEditorStore, useSubmissionStore, useUserStore } from "@/store";
 import { QuestionDetail, TestCase } from "@/types";
 import { useEffect } from "react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface EditorLayoutProps {
     problem: QuestionDetail;
     testCases: TestCase[];
+}
+
+function Pane({ children }: { children: React.ReactNode }) {
+    return (
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+            {children}
+        </div>
+    );
 }
 
 export function EditorLayout({ problem, testCases }: EditorLayoutProps) {
@@ -26,6 +35,8 @@ export function EditorLayout({ problem, testCases }: EditorLayoutProps) {
         setLanguage 
     } = useEditorStore();
     const { reset: resetSubmission } = useSubmissionStore();
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+    const direction = isDesktop ? "horizontal" : "vertical";
 
     // Listen for user changes to reload code from local storage
     const userId = useUserStore((state) => state.userId);
@@ -44,31 +55,35 @@ export function EditorLayout({ problem, testCases }: EditorLayoutProps) {
     }, [problem, testCases, setProblem, initializeTestcases, resetSubmission]);
 
     return (
-        <div className="h-[calc(100vh-4rem)] mt-2 w-full overflow-hidden flex flex-col relative">
-            <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+        <div className="flex h-[calc(100dvh-3rem)] w-full flex-col overflow-hidden bg-background p-1.5">
+            <ResizablePanelGroup key={direction} direction={direction} className="h-full w-full">
                 {/* Left Panel: Problem Description */}
-                <ResizablePanel defaultSize={40} minSize={25} maxSize={75}>
-                    <ProblemDescription />
+                <ResizablePanel defaultSize={isDesktop ? 42 : 40} minSize={isDesktop ? 25 : 15} maxSize={75}>
+                    <Pane>
+                        <ProblemDescription />
+                    </Pane>
                 </ResizablePanel>
 
                 <ResizableHandle withHandle />
 
                 {/* Right Panel: Code Editor & Test Cases */}
-                <ResizablePanel defaultSize={60}>
+                <ResizablePanel defaultSize={isDesktop ? 58 : 60}>
                     <ResizablePanelGroup direction="vertical">
                         {/* Top: Code Editor */}
-                        <ResizablePanel defaultSize={70} minSize={30}>
-                            <div className="flex flex-col h-full">
+                        <ResizablePanel defaultSize={65} minSize={25}>
+                            <Pane>
                                 <EditorToolbar />
                                 <CodeEditor />
-                            </div>
+                            </Pane>
                         </ResizablePanel>
 
                         <ResizableHandle withHandle />
 
                         {/* Bottom: Test Cases / Results */}
-                        <ResizablePanel defaultSize={30} minSize={10}>
-                            <TestCasesPanel />
+                        <ResizablePanel defaultSize={35} minSize={12}>
+                            <Pane>
+                                <TestCasesPanel />
+                            </Pane>
                         </ResizablePanel>
                     </ResizablePanelGroup>
                 </ResizablePanel>

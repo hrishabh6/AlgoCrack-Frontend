@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { ENDPOINTS } from "@/lib/constants";
@@ -11,7 +12,10 @@ import { StatsCard } from "./StatsCard";
 import { RecentSubmissions } from "./RecentSubmissions";
 import { ContributionHeatmap } from "./ContributionHeatmap";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EmptyState, PageContainer, StatCard, TagChip } from "@/components/shared";
+import { CheckCircle2, Code2, LogIn, Percent } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function ProfilePage() {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -74,35 +78,36 @@ export function ProfilePage() {
         };
     }, [profile, user?.email]);
 
-    // Auth loading
     if (authLoading) {
         return <ProfileSkeleton />;
     }
 
-    // Not logged in
     if (!isAuthenticated) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-muted-foreground">
-                <AlertCircle className="h-12 w-12 mb-4 text-muted-foreground/50" />
-                <h2 className="text-xl font-semibold text-foreground">Sign in to view your profile</h2>
-                <p className="mt-2 text-sm">Log in to track your progress and see your stats.</p>
-            </div>
+            <PageContainer size="narrow" className="flex min-h-[60vh] items-center justify-center">
+                <EmptyState
+                    icon={<LogIn />}
+                    title="Sign in to view your profile"
+                    description="Log in to track your progress and see your stats."
+                    action={
+                        <Button asChild size="sm">
+                            <Link href={`/auth/signin?next=${encodeURIComponent("/profile")}`}>Sign in</Link>
+                        </Button>
+                    }
+                />
+            </PageContainer>
         );
     }
 
-    // Loading
     if (loading) {
         return <ProfileSkeleton />;
     }
 
-    // Error
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-muted-foreground">
-                <AlertCircle className="h-12 w-12 mb-4 text-red-500/50" />
-                <h2 className="text-xl font-semibold text-foreground">Something went wrong</h2>
-                <p className="mt-2 text-sm">{error}</p>
-            </div>
+            <PageContainer size="narrow" className="flex min-h-[60vh] items-center justify-center">
+                <EmptyState tone="error" title="Something went wrong" description={error} />
+            </PageContainer>
         );
     }
 
@@ -110,86 +115,151 @@ export function ProfilePage() {
         return null;
     }
 
+    const details = resolvedUserDetails ?? profile.userDetails;
+    const { userStats, languageStats } = profile;
+    const completionRatio = userStats.totalQuestions > 0
+        ? Math.round((userStats.totalSolved / userStats.totalQuestions) * 100)
+        : 0;
+    const skills = details.skills
+        ? details.skills.split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
+    const maxLanguageSolved = Math.max(1, ...languageStats.map((l) => l.problemsSolved));
+
     return (
-        <div className="w-full bg-background">
-            <div className="w-full max-w-[1200px] mx-auto px-4 py-4">
-                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-3">
-                    {/* Left Sidebar */}
-                    <aside className="lg:sticky lg:top-24 lg:self-start space-y-4">
-                        <div className="rounded-lg border border-border bg-card shadow-sm">
-                            <UserCard
-                                user={resolvedUserDetails ?? profile.userDetails}
-                                languageStats={profile.languageStats}
-                            />
-                        </div>
-                    </aside>
+        <PageContainer className="space-y-4">
+            <UserCard user={details} />
 
-                    {/* Main Content */}
-                    <div className="space-y-3">
-                        {/* Stats */}
-                        <section>
-                            <StatsCard stats={profile.userStats} />
-                        </section>
-
-                        {/* Contribution Heatmap */}
-                        <section>
-                            <ContributionHeatmap userId={user!.userId} />
-                        </section>
-
-                        {/* Recent Submissions */}
-                        <section>
-                            <RecentSubmissions submissions={profile.recentSubmissions} />
-                        </section>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                {/* Main column */}
+                <div className="min-w-0 space-y-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <StatCard
+                            label="Solved"
+                            icon={<CheckCircle2 />}
+                            value={userStats.totalSolved}
+                            helper={`of ${userStats.totalQuestions} problems`}
+                        />
+                        <StatCard
+                            label="Completion"
+                            icon={<Percent />}
+                            value={`${completionRatio}%`}
+                            helper="of all problems"
+                        />
+                        <StatCard
+                            label="Languages"
+                            icon={<Code2 />}
+                            value={languageStats.length}
+                            helper={languageStats.length === 1 ? "language used" : "languages used"}
+                        />
                     </div>
+
+                    <section className="rounded-lg border bg-card p-5" aria-label="Solved by difficulty">
+                        <StatsCard stats={userStats} />
+                    </section>
+
+                    <section className="rounded-lg border bg-card p-5" aria-label="Activity">
+                        <h2 className="mb-4 text-sm font-semibold text-foreground">Activity</h2>
+                        <ContributionHeatmap userId={user!.userId} />
+                    </section>
+
+                    <section className="overflow-hidden rounded-lg border bg-card">
+                        <RecentSubmissions submissions={profile.recentSubmissions} />
+                    </section>
                 </div>
+
+                {/* Sidebar */}
+                <aside className="space-y-4 lg:sticky lg:top-16 lg:self-start">
+                    {details.about && (
+                        <SidebarSection title="About">
+                            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                                {details.about}
+                            </p>
+                        </SidebarSection>
+                    )}
+
+                    <SidebarSection title="Languages">
+                        {languageStats.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No accepted solutions yet.</p>
+                        ) : (
+                            <ul className="space-y-3">
+                                {languageStats.map((lang) => (
+                                    <li key={lang.language}>
+                                        <div className="mb-1 flex items-center justify-between text-xs">
+                                            <span className="font-mono text-foreground">{lang.language}</span>
+                                            <span className="font-mono tabular-nums text-muted-foreground">
+                                                {lang.problemsSolved} solved
+                                            </span>
+                                        </div>
+                                        <div className="h-1 overflow-hidden rounded-full bg-accent">
+                                            <div
+                                                className="h-full rounded-full bg-primary/80"
+                                                style={{ width: `${(lang.problemsSolved / maxLanguageSolved) * 100}%` }}
+                                            />
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </SidebarSection>
+
+                    {skills.length > 0 && (
+                        <SidebarSection title="Skills">
+                            <div className="flex flex-wrap gap-1.5">
+                                {skills.map((skill) => (
+                                    <TagChip key={skill}>{skill}</TagChip>
+                                ))}
+                            </div>
+                        </SidebarSection>
+                    )}
+                </aside>
             </div>
-        </div>
+        </PageContainer>
+    );
+}
+
+function SidebarSection({
+    title,
+    children,
+    className,
+}: {
+    title: string;
+    children: React.ReactNode;
+    className?: string;
+}) {
+    return (
+        <section className={cn("rounded-lg border bg-card p-4", className)} aria-label={title}>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
+            {children}
+        </section>
     );
 }
 
 function ProfileSkeleton() {
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
-                {/* Left sidebar skeleton */}
-                <div className="rounded-xl border bg-card p-6 space-y-4">
-                    <div className="flex items-start gap-4">
-                        <Skeleton className="h-20 w-20 rounded-full" />
-                        <div className="flex-1 space-y-2">
-                            <Skeleton className="h-5 w-32" />
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-4 w-20" />
-                        </div>
-                    </div>
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <div className="space-y-3 pt-4">
-                        <Skeleton className="h-4 w-28" />
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-4 w-36" />
-                    </div>
-                </div>
-
-                {/* Right content skeleton */}
-                <div className="space-y-6">
-                    <div className="rounded-xl border bg-card p-6">
-                        <div className="flex items-center gap-8">
-                            <Skeleton className="h-40 w-40 rounded-full" />
-                            <div className="flex-1 space-y-4">
-                                <Skeleton className="h-6 w-full" />
-                                <Skeleton className="h-6 w-full" />
-                                <Skeleton className="h-6 w-full" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="rounded-xl border bg-card p-6 space-y-4">
-                        <Skeleton className="h-5 w-40" />
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
+        <PageContainer className="space-y-4" aria-busy="true" aria-label="Loading profile">
+            <div className="flex items-center gap-4 rounded-lg border bg-card p-6">
+                <Skeleton className="size-16 rounded-full" />
+                <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-3.5 w-28" />
+                    <Skeleton className="h-3.5 w-72 max-w-full" />
                 </div>
             </div>
-        </div>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <Skeleton key={i} className="h-[92px] w-full rounded-lg" />
+                        ))}
+                    </div>
+                    <Skeleton className="h-44 w-full rounded-lg" />
+                    <Skeleton className="h-48 w-full rounded-lg" />
+                </div>
+                <div className="space-y-4">
+                    <Skeleton className="h-32 w-full rounded-lg" />
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+            </div>
+        </PageContainer>
     );
 }

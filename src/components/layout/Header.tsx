@@ -8,27 +8,34 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/store";
 import { cn } from "@/lib/utils";
-import { Code2, User, LogOut, Settings, Sun, Moon } from "lucide-react";
+import { User, LogOut, Sun, Moon, Menu, ListChecks, History } from "lucide-react";
 import { ProblemActions } from "@/components/problems/problem-actions";
+import { BrandMark } from "@/components/shared";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 
 const navLinks = [
-  { href: "/problems", label: "Problems" },
-  { href: "/submissions", label: "Submissions" },
+  { href: "/problems", label: "Problems", icon: ListChecks },
+  { href: "/submissions", label: "Submissions", icon: History },
 ];
+
+function isProblemWorkspace(pathname: string) {
+  return pathname.startsWith("/problems/") && pathname.split("/").length > 2;
+}
 
 export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useUserStore();
   const { user, isAuthenticated, logout } = useAuth();
   const [profileImg, setProfileImg] = useState<string | null>(null);
+  const inWorkspace = isProblemWorkspace(pathname);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -60,26 +67,35 @@ export function Header() {
     };
   }, [isAuthenticated, user?.userId]);
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center w-full px-4">
-        {/* Logo */}
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <Code2 className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">AlgoCrack</span>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/90 backdrop-blur-sm supports-[backdrop-filter]:bg-background/75">
+      <div
+        className={cn(
+          "relative mx-auto flex h-12 w-full items-center gap-2 px-3 sm:px-4",
+          !inWorkspace && "max-w-7xl sm:px-6"
+        )}
+      >
+        <Link
+          href="/"
+          className="mr-3 flex items-center rounded-md focus-visible:outline-offset-4"
+          aria-label="AlgoCrack home"
+        >
+          <BrandMark />
         </Link>
 
-        {/* Navigation */}
-        <nav className="flex items-center gap-6 text-sm">
+        <nav aria-label="Main" className="hidden items-center gap-0.5 sm:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
+              aria-current={isActive(link.href) ? "page" : undefined}
               className={cn(
-                "transition-colors hover:text-foreground/80",
-                pathname === link.href
-                  ? "text-foreground font-medium"
-                  : "text-foreground/60"
+                "relative rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors duration-150",
+                isActive(link.href)
+                  ? "text-foreground after:absolute after:inset-x-2.5 after:-bottom-[9px] after:h-0.5 after:rounded-full after:bg-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
               {link.label}
@@ -87,39 +103,52 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Center Actions (Only for Problem Page) */}
-        {pathname.startsWith("/problems/") && pathname.split("/").length > 2 && (
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+        {inWorkspace && (
+          <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
             <ProblemActions />
           </div>
         )}
 
-        {/* Right side */}
-        <div className="ml-auto flex items-center gap-2">
-          {/* Theme toggle */}
+        <div className="ml-auto flex items-center gap-1">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={toggleTheme}
-            className="h-9 w-9"
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
           >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-            <span className="sr-only">Toggle theme</span>
+            {theme === "dark" ? <Sun /> : <Moon />}
           </Button>
 
-          {/* User Menu or Sign In */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" className="sm:hidden" aria-label="Open navigation">
+                <Menu />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {navLinks.map((link) => (
+                <DropdownMenuItem key={link.href} asChild>
+                  <Link href={link.href} className={cn(isActive(link.href) && "text-primary")}>
+                    <link.icon />
+                    {link.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Avatar className="h-9 w-9">
+                <Button
+                  variant="ghost"
+                  className="relative size-8 rounded-full p-0"
+                  aria-label="Account menu"
+                >
+                  <Avatar className="size-7 border border-border">
                     <AvatarImage
                       src={profileImg || user?.imgUrl || fallbackAvatar}
-                      alt={user?.email || "User"}
+                      alt=""
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         if (fallbackAvatar && e.currentTarget.src !== fallbackAvatar) {
@@ -129,42 +158,44 @@ export function Header() {
                         }
                       }}
                     />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
                       {user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium text-sm truncate">{user?.email}</p>
-                    <p className="text-xs text-muted-foreground">{user?.role}</p>
-                  </div>
-                </div>
+              <DropdownMenuContent className="w-60" align="end" forceMount>
+                <DropdownMenuLabel className="flex flex-col gap-0.5 font-normal">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {user?.name || user?.email}
+                  </span>
+                  {user?.name && (
+                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+                  )}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
+                  <Link href="/profile">
+                    <User />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                  <Link href="/submissions">
+                    <History />
+                    Submissions
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-destructive" onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
+                <DropdownMenuItem variant="destructive" onClick={logout}>
+                  <LogOut />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="default" size="sm">
-              <Link href={`/auth/signin?next=${encodeURIComponent(pathname)}`}>Sign In</Link>
+            <Button asChild size="sm" className="ml-1">
+              <Link href={`/auth/signin?next=${encodeURIComponent(pathname)}`}>Sign in</Link>
             </Button>
           )}
         </div>

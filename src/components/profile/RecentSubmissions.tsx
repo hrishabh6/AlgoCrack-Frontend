@@ -1,118 +1,69 @@
 "use client";
 
 import { RecentSubmission } from "@/types";
-import { CheckCircle2, XCircle, Clock, ArrowRight } from "lucide-react";
+import { ArrowRight, History } from "lucide-react";
 import Link from "next/link";
 import { problemPath } from "@/lib/slug-utils";
+import { EmptyState, StatusBadge } from "@/components/shared";
+import { formatRelativeTime } from "@/lib/verdict";
 
 interface RecentSubmissionsProps {
     submissions: RecentSubmission[];
 }
 
 export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
-    if (submissions.length === 0) {
-        return (
-            <div className="rounded-xl border border-border bg-card/50 p-8 text-center backdrop-blur-sm">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 justify-center text-muted-foreground">
-                    <Clock className="h-5 w-5" />
-                    Recent Submissions
-                </h2>
-                <div className="py-12 flex flex-col items-center justify-center space-y-3">
-                    <div className="h-16 w-16 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground/50">
-                        <Clock className="h-8 w-8" />
-                    </div>
-                    <p className="text-muted-foreground">No submissions yet.</p>
-                    <p className="text-xs text-muted-foreground/50">Solve some problems to see them here!</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="rounded-lg border border-border/30 bg-card shadow-sm flex flex-col">
-            {/* Header */}
-            <div className="px-3 py-2 border-b border-border/30 flex items-center justify-between">
-                <h2 className="text-sm font-medium text-foreground flex items-center gap-2">
-                    Recent Submissions
-                </h2>
+        <div className="flex flex-col">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+                <h2 className="text-sm font-semibold text-foreground">Recent submissions</h2>
                 <Link
                     href="/submissions"
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                    className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
                 >
-                    View All <ArrowRight className="h-3 w-3" />
+                    View all <ArrowRight className="size-3" />
                 </Link>
             </div>
 
-            {/* List */}
-            <div className="divide-y divide-border/30">
-                {submissions.map((sub) => {
-                    const isAccepted = sub.verdict === "ACCEPTED";
-                    const timeAgo = getRelativeTime(sub.timestamp);
-                    return (
-                        <div
+            {submissions.length === 0 ? (
+                <EmptyState
+                    icon={<History />}
+                    title="No submissions yet"
+                    description="Solve some problems to see them here."
+                    action={
+                        <Link href="/problems" className="text-sm font-medium text-primary hover:underline">
+                            Browse problems
+                        </Link>
+                    }
+                />
+            ) : (
+                <ul className="divide-y">
+                    {submissions.map((sub) => (
+                        <li
                             key={sub.submissionId}
-                            className="flex items-center justify-between p-2 hover:bg-muted/30 transition-colors group"
+                            className="flex items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-accent/40"
                         >
-                            <div className="flex items-center gap-3 min-w-0">
-                                {/* Status Icon */}
-                                <div className={`shrink-0`}>
-                                    {isAccepted ? (
-                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                    ) : (
-                                        <XCircle className="h-4 w-4 text-red-500" />
-                                    )}
-                                </div>
-
-                                {/* Problem Info */}
-                                <div className="space-y-0.5 min-w-0">
-                                    <Link
-                                        href={sub.questionId
-                                            ? problemPath(sub.questionTitle, sub.questionId)
-                                            : `/problems/${sub.questionSlug || sub.questionTitle.toLowerCase().replace(/\s+/g, '-')}`}
-                                        className="text-sm font-medium truncate hover:text-primary transition-colors block leading-none"
-                                    >
-                                        {sub.questionTitle}
-                                    </Link>
-                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                        <span className="font-mono">
-                                            {formatVerdict(sub.verdict)}
-                                        </span>
-                                        <span>•</span>
-                                        <span>{timeAgo}</span>
-                                    </div>
-                                </div>
+                            <Link
+                                href={sub.questionId
+                                    ? problemPath(sub.questionTitle, sub.questionId)
+                                    : `/problems/${sub.questionSlug || sub.questionTitle.toLowerCase().replace(/\s+/g, '-')}`}
+                                className="min-w-0 truncate text-sm font-medium text-foreground transition-colors hover:text-primary"
+                            >
+                                {sub.questionTitle}
+                            </Link>
+                            <div className="flex shrink-0 items-center gap-3">
+                                <StatusBadge verdict={sub.verdict} showIcon={false} />
+                                <time
+                                    dateTime={sub.timestamp}
+                                    title={new Date(sub.timestamp).toLocaleString()}
+                                    className="w-14 text-right font-mono text-[11px] tabular-nums text-subtle-foreground"
+                                >
+                                    {formatRelativeTime(sub.timestamp)}
+                                </time>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
-}
-
-function formatVerdict(verdict: string): string {
-    return verdict
-        .replace(/_/g, " ")
-        .split(" ")
-        .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-        .join(" ");
-}
-
-function getRelativeTime(timestamp: string): string {
-    const now = new Date();
-    const then = new Date(timestamp);
-    const diffMs = now.getTime() - then.getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHr = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHr / 24);
-    const diffWeek = Math.floor(diffDay / 7);
-    const diffMonth = Math.floor(diffDay / 30);
-
-    if (diffSec < 60) return "just now";
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffHr < 24) return `${diffHr}h ago`;
-    if (diffDay < 7) return `${diffDay}d ago`;
-    if (diffWeek < 5) return `${diffWeek}w ago`;
-    return `${diffMonth}mo ago`;
 }

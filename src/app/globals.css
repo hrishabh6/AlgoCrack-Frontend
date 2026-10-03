@@ -25,10 +25,21 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-selected: var(--selected);
+  --color-selected-foreground: var(--selected-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
@@ -38,6 +49,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -47,86 +60,101 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+/* Light theme: warm stone neutrals, darker amber for contrast on white. */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  --background: #f7f6f3;
+  --foreground: #1c1a17;
+  --surface: #ffffff;
+  --surface-2: #fbfaf8;
+  --card: #ffffff;
+  --card-foreground: #1c1a17;
+  --popover: #ffffff;
+  --popover-foreground: #1c1a17;
+  --primary: #c26a12;
+  --primary-foreground: #ffffff;
+  --secondary: #efede8;
+  --secondary-foreground: #1c1a17;
+  --muted: #f0eee9;
+  --muted-foreground: #66625b;
+  --subtle-foreground: #8f8a82;
+  --accent: #ebe8e2;
+  --accent-foreground: #1c1a17;
+  --destructive: #c93c3c;
+  --destructive-foreground: #ffffff;
+  --success: #1f8a5b;
+  --success-foreground: #ffffff;
+  --warning: #a67c00;
+  --warning-foreground: #ffffff;
+  --info: #13809b;
+  --info-foreground: #ffffff;
+  --selected: #6e4fd8;
+  --selected-foreground: #ffffff;
+  --border: #e6e3dd;
+  --border-strong: #d4d0c8;
+  --input: #d4d0c8;
+  --ring: #c26a12;
+  --chart-1: #c26a12;
+  --chart-2: #1f8a5b;
+  --chart-3: #a67c00;
+  --chart-4: #c93c3c;
+  --chart-5: #13809b;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1a17;
+  --sidebar-primary: #c26a12;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #efede8;
+  --sidebar-accent-foreground: #1c1a17;
+  --sidebar-border: #e6e3dd;
+  --sidebar-ring: #c26a12;
 }
 
+/* Dark theme (default): warm graphite surfaces with a single amber accent. */
 .dark {
-  --background: #0f1115;
-  --foreground: #f0f6fc;
-  --card: #0f1115;
-  --card-foreground: #f0f6fc;
-  --popover: #161b22;
-  --popover-foreground: #f0f6fc;
-  --primary: #58a6ff;
-  --primary-foreground: #0f1117;
-  --secondary: #1c2128;
-  --secondary-foreground: #f0f6fc;
-  --muted: #161b22;
-  --muted-foreground: #8b949e;
-  --accent: #1f6feb;
-  --accent-foreground: #f0f6fc;
-  --destructive: #f85149;
-  --destructive-foreground: #f0f6fc;
-  --border: #2a2f36;
-  --input: #2a2f36;
-  --ring: #58a6ff;
-  --chart-1: #58a6ff;
-  --chart-2: #2ea043;
-  --chart-3: #f59e0b;
-  --chart-4: #f85149;
-  --chart-5: #ff4d6d;
-  --sidebar: #161b22;
-  --sidebar-foreground: #f0f6fc;
-  --sidebar-primary: #58a6ff;
-  --sidebar-primary-foreground: #0f1117;
-  --sidebar-accent: #1c2128;
-  --sidebar-accent-foreground: #f0f6fc;
-  --sidebar-border: #2a2f36;
-  --sidebar-ring: #58a6ff;
-}
-
-@layer utilities {
-  .card-premium {
-    background: linear-gradient(145deg, #161b22, #1c2128);
-    border: 1px solid #2a2f36;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  }
-  
-  .text-glow {
-    text-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
-  }
+  --background: #111214;
+  --foreground: #ebe8e3;
+  --surface: #17181b;
+  --surface-2: #1d1f23;
+  --card: #17181b;
+  --card-foreground: #ebe8e3;
+  --popover: #1d1f23;
+  --popover-foreground: #ebe8e3;
+  --primary: #f0a04b;
+  --primary-foreground: #1b1105;
+  --secondary: #222428;
+  --secondary-foreground: #ebe8e3;
+  --muted: #1b1c20;
+  --muted-foreground: #9b9a97;
+  --subtle-foreground: #6c6b69;
+  --accent: #24262b;
+  --accent-foreground: #ebe8e3;
+  --destructive: #f06a6a;
+  --destructive-foreground: #1d0a0a;
+  --success: #4cc38a;
+  --success-foreground: #06170f;
+  --warning: #e2c044;
+  --warning-foreground: #1a1503;
+  --info: #4fc1d9;
+  --info-foreground: #04161b;
+  --selected: #a48bf0;
+  --selected-foreground: #120b24;
+  --border: #2a2c31;
+  --border-strong: #383b42;
+  --input: #383b42;
+  --ring: #f0a04b;
+  --chart-1: #f0a04b;
+  --chart-2: #4cc38a;
+  --chart-3: #e2c044;
+  --chart-4: #f06a6a;
+  --chart-5: #4fc1d9;
+  --sidebar: #17181b;
+  --sidebar-foreground: #ebe8e3;
+  --sidebar-primary: #f0a04b;
+  --sidebar-primary-foreground: #1b1105;
+  --sidebar-accent: #24262b;
+  --sidebar-accent-foreground: #ebe8e3;
+  --sidebar-border: #2a2c31;
+  --sidebar-ring: #f0a04b;
 }
 
 @layer base {
@@ -134,11 +162,91 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 35%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   .container {
     @apply w-full max-w-full mx-0 px-0;
   }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+/* Unlayered on purpose so these win over the typography plugin's utility-layer defaults.
+   Pair with `prose prose-sm dark:prose-invert` on the markdown container. */
+.problem-prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-bullets: var(--subtle-foreground);
+  --tw-prose-invert-body: var(--foreground);
+  --tw-prose-invert-headings: var(--foreground);
+  --tw-prose-invert-bold: var(--foreground);
+  --tw-prose-invert-links: var(--primary);
+  --tw-prose-invert-code: var(--foreground);
+  --tw-prose-invert-bullets: var(--subtle-foreground);
+  line-height: 1.7;
+}
+
+.problem-prose :where(code):not(:where(pre *)) {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--muted);
+  padding: 1px 4px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+.problem-prose :where(code):not(:where(pre *))::before,
+.problem-prose :where(code):not(:where(pre *))::after {
+  content: none;
+}
+
+.problem-prose pre {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background-color: var(--muted);
+  color: var(--foreground);
+  font-size: 0.75rem;
+}
+
+.problem-prose pre code.hljs,
+.problem-prose pre .hljs {
+  background: transparent;
+  padding: 0;
 }

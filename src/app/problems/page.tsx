@@ -2,12 +2,14 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { RotateCcw } from "lucide-react";
 import { getQuestions, getTags } from "@/lib/api/problem-service";
-import { ProblemsTable } from "@/components/problems/problems-table";
+import { ProblemsTable, ProblemsTableSkeleton } from "@/components/problems/problems-table";
 import { ProblemsFilters } from "@/components/problems/problems-filters";
 import { ProblemsPagination } from "@/components/problems/problems-pagination";
-import { QuestionFilters, PaginatedResponse, QuestionSummary, Tag } from "@/types";
-import { Loader2 } from "lucide-react";
+import { EmptyState, PageContainer, PageHeader } from "@/components/shared";
+import { Button } from "@/components/ui/button";
+import { Difficulty, QuestionFilters, PaginatedResponse, QuestionSummary, Tag } from "@/types";
 
 function ProblemsPageContent() {
   const searchParams = useSearchParams();
@@ -15,6 +17,7 @@ function ProblemsPageContent() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -23,7 +26,9 @@ function ProblemsPageContent() {
 
       const page = Number(searchParams.get("page")) || 0;
       const size = Number(searchParams.get("size")) || 20;
-      const difficulty = searchParams.get("difficulty") as "Easy" | "Medium" | "Hard" | undefined;
+      const rawDifficulty = searchParams.get("difficulty");
+      const difficulty =
+        rawDifficulty && rawDifficulty !== "all" ? (rawDifficulty as Difficulty) : undefined;
       const tag = searchParams.get("tag") || undefined;
       const search = searchParams.get("search") || undefined;
       const company = searchParams.get("company") || undefined;
@@ -31,7 +36,7 @@ function ProblemsPageContent() {
       const filters: QuestionFilters = {
         page,
         size,
-        difficulty: difficulty === ("all" as any) ? undefined : difficulty,
+        difficulty,
         tag: tag === "all" ? undefined : tag,
         search,
         company,
@@ -44,7 +49,7 @@ function ProblemsPageContent() {
         ]);
         setQuestionsData(qData);
         setTags(tData);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to fetch problems:", err);
         setError("Failed to load problems. Please ensure you are logged in and the server is running.");
       } finally {
@@ -53,56 +58,68 @@ function ProblemsPageContent() {
     }
 
     fetchData();
-  }, [searchParams]);
+  }, [searchParams, reloadKey]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error || !questionsData) {
-    return (
-      <div className="w-full px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Problems</h1>
-        </div>
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center">
-          <h3 className="text-lg font-semibold text-destructive">Error</h3>
-          <p className="mt-2 text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  const total = questionsData?.totalElements;
 
   return (
-    <div className="w-full px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Problems</h1>
-        <p className="mt-2 text-muted-foreground">
-          Browse and solve coding problems to prepare for your next interview.
-        </p>
-      </div>
-
-      <ProblemsFilters availableTags={tags} />
+    <PageContainer size="wide">
+      <PageHeader
+        title="Problems"
+        meta={
+          typeof total === "number" && !error ? (
+            <span className="font-mono tabular-nums">
+              {total} {total === 1 ? "problem" : "problems"}
+            </span>
+          ) : null
+        }
+        description="Browse and solve coding problems to prepare for your next interview."
+      />
 
       <div className="mt-6">
-        <ProblemsTable questions={questionsData.content} />
+        <ProblemsFilters availableTags={tags} />
       </div>
 
-      <ProblemsPagination
-        currentPage={questionsData.pageable.pageNumber}
-        totalPages={questionsData.totalPages}
-      />
-    </div>
+      <div className="mt-3">
+        {isLoading ? (
+          <ProblemsTableSkeleton />
+        ) : error || !questionsData ? (
+          <div className="rounded-lg border bg-card">
+            <EmptyState
+              tone="error"
+              title="Couldn't load problems"
+              description={error ?? "Something went wrong."}
+              action={
+                <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+                  <RotateCcw />
+                  Try again
+                </Button>
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <ProblemsTable questions={questionsData.content} />
+            <ProblemsPagination
+              currentPage={questionsData.pageable.pageNumber}
+              totalPages={questionsData.totalPages}
+            />
+          </>
+        )}
+      </div>
+    </PageContainer>
   );
 }
 
 export default function ProblemsPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center p-8">Loading...</div>}>
+    <Suspense
+      fallback={
+        <PageContainer size="wide">
+          <ProblemsTableSkeleton />
+        </PageContainer>
+      }
+    >
       <ProblemsPageContent />
     </Suspense>
   );

@@ -1,8 +1,7 @@
-import { UserDetails, LanguageStat } from "@/types";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { UserDetails } from "@/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
     MapPin,
     GraduationCap,
@@ -10,12 +9,12 @@ import {
     Github,
     Twitter,
     Linkedin,
-    Trophy,
+    ArrowRight,
+    History,
 } from "lucide-react";
 
 interface UserCardProps {
     user: UserDetails;
-    languageStats: LanguageStat[];
 }
 
 function resolveSocialUrl(value: string, base: string): string {
@@ -24,11 +23,8 @@ function resolveSocialUrl(value: string, base: string): string {
     return `${base}${value}`;
 }
 
-export function UserCard({ user, languageStats }: UserCardProps) {
-    const skills = user.skills
-        ? user.skills.split(",").map((s) => s.trim()).filter(Boolean)
-        : [];
-
+/** Identity header for the profile page: avatar, name, headline and profile links. */
+export function UserCard({ user }: UserCardProps) {
     const initials = user.name
         ? user.name
             .split(" ")
@@ -40,158 +36,91 @@ export function UserCard({ user, languageStats }: UserCardProps) {
 
     const fallbackAvatar = `https://api.dicebear.com/7.x/notionists/svg?seed=${user.userId}&backgroundColor=e5e7eb`;
 
+    const links = [
+        user.location && { icon: MapPin, label: user.location },
+        user.school && { icon: GraduationCap, label: user.school },
+        user.website && { icon: Globe, label: user.website.replace(/^https?:\/\//, ""), href: user.website },
+        user.githubProfile && {
+            icon: Github,
+            label: user.githubProfile,
+            href: resolveSocialUrl(user.githubProfile, "https://github.com/"),
+        },
+        user.linkedinProfile && {
+            icon: Linkedin,
+            label: user.linkedinProfile,
+            href: resolveSocialUrl(user.linkedinProfile, "https://linkedin.com/in/"),
+        },
+        user.twitterProfile && {
+            icon: Twitter,
+            label: user.twitterProfile,
+            href: resolveSocialUrl(user.twitterProfile, "https://x.com/"),
+        },
+    ].filter(Boolean) as Array<{ icon: typeof MapPin; label: string; href?: string }>;
+
     return (
-        <div className="space-y-4 p-3">
-            {/* Identity Section */}
-            <div className="flex items-start gap-4">
-                <Avatar className="h-16 w-16 border border-border">
-                    <img
-                        src={user.imgUrl || fallbackAvatar}
-                        alt={user.name}
-                        className="h-full w-full rounded-full object-cover"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                            if (e.currentTarget.src !== fallbackAvatar) {
-                                e.currentTarget.src = fallbackAvatar;
-                            } else {
-                                e.currentTarget.style.display = "none";
-                            }
-                        }}
-                    />
-                    <AvatarFallback className="text-lg font-semibold bg-muted text-muted-foreground">
-                        {initials}
-                    </AvatarFallback>
-                </Avatar>
+        <section className="rounded-lg border bg-card p-5 md:p-6" aria-label="Profile">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div className="flex min-w-0 items-start gap-4">
+                    <Avatar className="size-16 shrink-0 border border-border-strong">
+                        <AvatarImage
+                            src={user.imgUrl || fallbackAvatar}
+                            alt=""
+                            referrerPolicy="no-referrer"
+                            className="object-cover"
+                        />
+                        <AvatarFallback className="bg-primary/15 text-lg font-semibold text-primary">
+                            {initials}
+                        </AvatarFallback>
+                    </Avatar>
 
-                <div className="flex-1 min-w-0 pt-1">
-                    <h1 className="text-base font-medium truncate text-foreground leading-tight">
-                        {user.name || user.userId}
-                    </h1>
-                    <p className="text-xs text-muted-foreground mb-1">@{user.userId}</p>
+                    <div className="min-w-0 space-y-1">
+                        <h1 className="truncate text-xl font-semibold tracking-tight text-foreground md:text-2xl">
+                            {user.name || user.userId}
+                        </h1>
+                        <p className="truncate font-mono text-xs text-muted-foreground">@{user.userId}</p>
+                        {user.headline && (
+                            <p className="pt-1 text-sm leading-relaxed text-foreground/85">{user.headline}</p>
+                        )}
+                    </div>
+                </div>
 
-                    {user.rank && (
-                        <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            <Trophy className="h-3 w-3 text-yellow-500" />
-                            <span>Rank <span className="text-foreground font-medium">#{Number(user.rank).toLocaleString()}</span></span>
-                        </div>
-                    )}
+                <div className="flex shrink-0 gap-2">
+                    <Button asChild size="sm">
+                        <Link href="/problems">
+                            Browse problems
+                            <ArrowRight />
+                        </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                        <Link href="/submissions">
+                            <History />
+                            Submissions
+                        </Link>
+                    </Button>
                 </div>
             </div>
 
-            {/* Edit Profile Button */}
-            <Button
-                variant="secondary"
-                className="w-full bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground shadow-none h-7 text-xs font-medium border border-border/50"
-            >
-                Edit Profile
-            </Button>
-
-            <Separator className="bg-border/40" />
-
-            {/* Info Links */}
-            <div className="space-y-2 text-xs">
-                {user.location && (
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        <span>{user.location}</span>
-                    </div>
-                )}
-                {user.school && (
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                        <GraduationCap className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{user.school}</span>
-                    </div>
-                )}
-                {user.website && (
-                    <a
-                        href={user.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Globe className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate hover:underline underline-offset-2">{user.website}</span>
-                    </a>
-                )}
-                {user.githubProfile && (
-                    <a
-                        href={resolveSocialUrl(user.githubProfile, "https://github.com/")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Github className="h-3.5 w-3.5 shrink-0" />
-                        <span>{user.githubProfile}</span>
-                    </a>
-                )}
-                {user.linkedinProfile && (
-                    <a
-                        href={resolveSocialUrl(user.linkedinProfile, "https://linkedin.com/in/")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Linkedin className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{user.linkedinProfile}</span>
-                    </a>
-                )}
-                {user.twitterProfile && (
-                    <a
-                        href={resolveSocialUrl(user.twitterProfile, "https://x.com/")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Twitter className="h-3.5 w-3.5 shrink-0" />
-                        <span>{user.twitterProfile}</span>
-                    </a>
-                )}
-            </div>
-
-            {/* Skills */}
-            {skills.length > 0 && (
-                <>
-                    <Separator className="bg-border/40" />
-                    <div>
-                        <h3 className="text-xs font-semibold text-foreground mb-2">Skills</h3>
-                        <div className="flex flex-wrap gap-1.5">
-                            {skills.map((skill) => (
-                                <Badge
-                                    key={skill}
-                                    variant="secondary"
-                                    className="px-2 py-0 h-5 text-[10px] font-medium bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground border-transparent transition-colors rounded-full"
+            {links.length > 0 && (
+                <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t pt-4 text-xs text-muted-foreground">
+                    {links.map(({ icon: Icon, label, href }) => (
+                        <li key={label} className="flex min-w-0 items-center gap-1.5">
+                            <Icon className="size-3.5 shrink-0 text-subtle-foreground" aria-hidden="true" />
+                            {href ? (
+                                <a
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="truncate transition-colors hover:text-foreground hover:underline underline-offset-2"
                                 >
-                                    {skill}
-                                </Badge>
-                            ))}
-                        </div>
-                    </div>
-                </>
+                                    {label}
+                                </a>
+                            ) : (
+                                <span className="truncate">{label}</span>
+                            )}
+                        </li>
+                    ))}
+                </ul>
             )}
-
-            {/* Languages */}
-            {languageStats.length > 0 && (
-                <>
-                    <Separator className="bg-border/40" />
-                    <div>
-                        <div className="space-y-1.5">
-                            {languageStats.map((lang) => (
-                                <div
-                                    key={lang.language}
-                                    className="flex items-center justify-between text-xs"
-                                >
-                                    <span className="text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded text-[10px] font-mono">
-                                        {lang.language}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                        <span className="text-foreground font-medium">{lang.problemsSolved}</span> solved
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </>
-            )}
-        </div>
+        </section>
     );
 }

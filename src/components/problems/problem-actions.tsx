@@ -1,7 +1,5 @@
 "use client";
 
-console.log('>>> problem-actions.tsx LOADED <<<');
-
 import { Button } from "@/components/ui/button";
 import { Play, Send, Loader2 } from "lucide-react";
 import { useSubmissionStore, useEditorStore } from "@/store";
@@ -11,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export function ProblemActions() {
-    console.log('>>> ProblemActions component rendered <<<');
     const { isRunning, isSubmitting, startRun, startSubmission, setResults, setError } = useSubmissionStore();
     const { language, code, currentProblem, getTestcasesForRun, setActiveTab } = useEditorStore();
     const { user, isAuthenticated } = useAuth();
@@ -35,9 +32,6 @@ export function ProblemActions() {
             // Get testcases from unified store (handles default + user-modified)
             const testCases = getTestcasesForRun();
 
-            console.log('=== handleRun Debug ===');
-            console.log('testCases for run:', JSON.stringify(testCases, null, 2));
-
             const payload = {
                 questionId: currentProblem.id,
                 language,
@@ -48,13 +42,6 @@ export function ProblemActions() {
             // Use new synchronous /run endpoint
             const response = await runCode(payload);
 
-            console.log('=== Response received in handleRun ===');
-            console.log('Full response object:', response);
-            console.log('response.verdict:', response.verdict);
-            console.log('response.testCaseResults:', response.testCaseResults);
-            console.log('response.compilationOutput:', response.compilationOutput);
-            console.log('response.errorMessage:', response.errorMessage);
-
             // Map RunResponse to store format
             const storePayload = {
                 verdict: response.verdict,
@@ -64,9 +51,6 @@ export function ProblemActions() {
                 errorMessage: response.errorMessage ?? undefined,
                 testCaseResults: response.testCaseResults ?? undefined,
             };
-
-            console.log('=== Setting to store ===');
-            console.log('storePayload:', JSON.stringify(storePayload, null, 2));
 
             setResults(storePayload);
 
@@ -79,20 +63,17 @@ export function ProblemActions() {
     };
 
     const handleSubmit = async () => {
-        console.log('====== SUBMIT BUTTON CLICKED ======');
         if (!isAuthenticated) {
             router.push("/auth/signin");
             return;
         }
 
         if (!currentProblem) {
-            console.log('No currentProblem - returning early');
             return;
         }
 
         try {
             const tempSubmissionId = `${currentProblem.id}-${Date.now()}`;
-            console.log('Starting submission with tempId:', tempSubmissionId);
             startSubmission(tempSubmissionId);
 
             const payload = {
@@ -102,23 +83,13 @@ export function ProblemActions() {
                 code,
             };
 
-            console.log('Submit payload:', JSON.stringify(payload, null, 2));
             const response = await submitSolution(payload);
-            console.log('submitSolution response:', response);
 
             const submissionId = response.submissionId;
-            console.log('submissionId:', submissionId);
 
             if (submissionId) {
-                console.log('Polling for submission result...');
                 // Poll for completion
                 const result = await pollSubmission(submissionId);
-                console.log('=== Poll Result (Raw) ===');
-                console.log(JSON.stringify(result, null, 2));
-                console.log('result.verdict:', result.verdict);
-                console.log('result.testCaseResults:', result.testCaseResults);
-                console.log('result.compilationOutput:', result.compilationOutput);
-                console.log('result.errorMessage:', result.errorMessage);
 
                 const storePayload = {
                     verdict: result.verdict ?? "WRONG_ANSWER",
@@ -131,7 +102,6 @@ export function ProblemActions() {
                     testCaseResults: result.testCaseResults ?? undefined,
                 };
 
-                console.log('Setting to store:', JSON.stringify(storePayload, null, 2));
                 setResults(storePayload);
 
                 setActiveTab("results");
@@ -145,21 +115,23 @@ export function ProblemActions() {
     };
 
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
             <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
+                className="h-7 md:h-8"
                 onClick={handleRun}
                 disabled={isRunning || isSubmitting || !currentProblem}
+                title="Run against the test cases below"
             >
                 {isRunning ? (
                     <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Running...
+                        <Loader2 className="animate-spin" />
+                        Running…
                     </>
                 ) : (
                     <>
-                        <Play className="h-4 w-4 mr-2" />
+                        <Play />
                         Run
                     </>
                 )}
@@ -167,18 +139,19 @@ export function ProblemActions() {
             <Button
                 variant="default"
                 size="sm"
+                className="h-7 md:h-8"
                 onClick={handleSubmit}
                 disabled={isRunning || isSubmitting || !currentProblem}
-                className="bg-green-600 hover:bg-green-700"
+                title="Submit for judging against hidden tests"
             >
                 {isSubmitting ? (
                     <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Submitting...
+                        <Loader2 className="animate-spin" />
+                        Submitting…
                     </>
                 ) : (
                     <>
-                        <Send className="h-4 w-4 mr-2" />
+                        <Send />
                         Submit
                     </>
                 )}

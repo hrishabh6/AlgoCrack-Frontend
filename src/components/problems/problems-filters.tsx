@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -11,7 +10,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { SearchInput } from "@/components/shared";
+import { X } from "lucide-react";
 import { Tag } from "@/types";
 
 interface ProblemsFiltersProps {
@@ -80,19 +80,19 @@ export function ProblemsFilters({ availableTags }: ProblemsFiltersProps) {
         router.push("/problems");
     };
 
-    return (
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between py-4">
-            <div className="flex flex-1 items-center gap-4 max-w-lg">
-                <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search problems..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-8"
-                    />
-                </div>
+    const hasFilters = Boolean(search) || difficulty !== "all" || tag !== "all";
 
+    return (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <SearchInput
+                value={search}
+                onValueChange={setSearch}
+                placeholder="Search problems…"
+                aria-label="Search problems"
+                containerClassName="w-full sm:max-w-xs"
+            />
+
+            <div className="flex items-center gap-2">
                 <Select
                     value={difficulty}
                     onValueChange={(val) => {
@@ -100,14 +100,23 @@ export function ProblemsFilters({ availableTags }: ProblemsFiltersProps) {
                         applyFilters({ difficulty: val });
                     }}
                 >
-                    <SelectTrigger className="w-[130px]">
+                    <SelectTrigger className="w-full sm:w-[140px]" aria-label="Filter by difficulty">
                         <SelectValue placeholder="Difficulty" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Difficulties</SelectItem>
-                        <SelectItem value="Easy">Easy</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="Hard">Hard</SelectItem>
+                        <SelectItem value="all">All difficulties</SelectItem>
+                        <SelectItem value="Easy">
+                            <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
+                            Easy
+                        </SelectItem>
+                        <SelectItem value="Medium">
+                            <span className="size-1.5 rounded-full bg-warning" aria-hidden="true" />
+                            Medium
+                        </SelectItem>
+                        <SelectItem value="Hard">
+                            <span className="size-1.5 rounded-full bg-destructive" aria-hidden="true" />
+                            Hard
+                        </SelectItem>
                     </SelectContent>
                 </Select>
 
@@ -118,11 +127,11 @@ export function ProblemsFilters({ availableTags }: ProblemsFiltersProps) {
                         applyFilters({ tag: val });
                     }}
                 >
-                    <SelectTrigger className="w-[130px]">
+                    <SelectTrigger className="w-full sm:w-[160px]" aria-label="Filter by tag">
                         <SelectValue placeholder="Tags" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Tags</SelectItem>
+                        <SelectItem value="all">All tags</SelectItem>
                         {availableTags.map((t) => (
                             <SelectItem key={t.id} value={t.name}>
                                 {t.name}
@@ -132,10 +141,10 @@ export function ProblemsFilters({ availableTags }: ProblemsFiltersProps) {
                 </Select>
             </div>
 
-            {(search || difficulty !== "all" || tag !== "all") && (
-                <Button variant="ghost" onClick={clearFilters} className="h-8 px-2 lg:px-3">
-                    Reset Filters
-                    <X className="ml-2 h-4 w-4" />
+            {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="self-start sm:self-auto">
+                    <X />
+                    Reset
                 </Button>
             )}
         </div>
