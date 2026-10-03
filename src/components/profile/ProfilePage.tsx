@@ -141,8 +141,8 @@ export function ProfilePage() {
                             value={streak ? `${streak.currentStreak}d` : "—"}
                             helper={
                                 streak
-                                    ? `Best ${streak.longestStreak}d · ${streak.activeToday ? "active today" : streak.currentStreak > 0 ? "submit today to keep it" : "submit to start one"}`
-                                    : "Daily submission streak"
+                                    ? `Best ${streak.longestStreak}d · ${streak.activeToday ? "today's POTD solved" : streak.currentStreak > 0 ? "solve today's POTD to keep it" : "solve today's POTD to start one"}`
+                                    : "Consecutive POTD solve streak"
                             }
                         />
                         <StatCard
