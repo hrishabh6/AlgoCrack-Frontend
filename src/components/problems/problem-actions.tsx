@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Play, Send, Loader2 } from "lucide-react";
-import { useSubmissionStore, useEditorStore } from "@/store";
+import { useSubmissionStore, useEditorStore, useProblemLibraryStore, useStreakStore } from "@/store";
 import { runCode, submitSolution, pollSubmission } from "@/lib/api/submission-service";
 
 import { useRouter } from "next/navigation";
@@ -105,6 +105,11 @@ export function ProblemActions() {
                 setResults(storePayload);
 
                 setActiveTab("results");
+
+                void useStreakStore.getState().refresh();
+                if (storePayload.verdict === "ACCEPTED") {
+                    void useProblemLibraryStore.getState().load({ force: true });
+                }
             } else {
                 throw new Error("No submission ID returned from submission service");
             }
