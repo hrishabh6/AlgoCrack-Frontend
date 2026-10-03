@@ -151,7 +151,7 @@ function ProblemsPageContent() {
                     title={filtered ? "No problems match these filters" : "No problems yet"}
                     description={
                       filtered
-                        ? filters.tags.length > 1
+                        ? filters.tags.length > 1 && filters.tagsOp === "is"
                           ? "Problems must have every selected topic. Try removing one."
                           : "Try a different search, difficulty or topic."
                         : "Problems will show up here once they are published."

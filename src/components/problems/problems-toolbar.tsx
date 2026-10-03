@@ -210,16 +210,23 @@ export function ProblemsToolbar({
             <ActiveFilter label={`“${filters.search}”`} onRemove={() => onChange({ search: "" })} />
           )}
           {filters.difficulty && (
-            <ActiveFilter label={filters.difficulty} onRemove={() => onChange({ difficulty: null })} />
+            <ActiveFilter
+              label={`${filters.difficultyOp === "is-not" ? "not " : ""}${filters.difficulty}`}
+              onRemove={() => onChange({ difficulty: null, difficultyOp: "is" })}
+            />
           )}
           {filters.status && (
             <ActiveFilter
-              label={filters.status === "solved" ? "Solved" : "Unsolved"}
-              onRemove={() => onChange({ status: null })}
+              label={`${filters.statusOp === "is-not" ? "not " : ""}${filters.status === "solved" ? "Solved" : "Unsolved"}`}
+              onRemove={() => onChange({ status: null, statusOp: "is" })}
             />
           )}
           {filters.tags.map((tag) => (
-            <ActiveFilter key={tag} label={tag} onRemove={() => onToggleTag(tag)} />
+            <ActiveFilter
+              key={tag}
+              label={`${filters.tagsOp === "is-not" ? "not " : ""}${tag}`}
+              onRemove={() => onToggleTag(tag)}
+            />
           ))}
           <button
             type="button"

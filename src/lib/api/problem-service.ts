@@ -24,8 +24,10 @@ export async function getQuestions(
   if (filters.page !== undefined) params.set("page", String(filters.page));
   if (filters.size !== undefined) params.set("size", String(filters.size));
   if (filters.difficulty) params.set("difficulty", filters.difficulty);
+  if (filters.excludeDifficulty) params.set("excludeDifficulty", filters.excludeDifficulty);
   if (filters.tag) params.set("tag", filters.tag);
   if (filters.tags && filters.tags.length > 0) params.set("tags", filters.tags.join(","));
+  if (filters.excludeTags && filters.excludeTags.length > 0) params.set("excludeTags", filters.excludeTags.join(","));
   if (filters.search) params.set("search", filters.search);
   if (filters.company) params.set("company", filters.company);
   if (filters.sort) params.set("sort", filters.sort);

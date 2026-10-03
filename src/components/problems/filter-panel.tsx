@@ -12,7 +12,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Difficulty, SolveStatusFilter, TagCount } from "@/types";
-import type { ProblemFilterState } from "./use-problem-filters";
+import type { FilterOp, ProblemFilterState } from "./use-problem-filters";
 
 const DIFFICULTY_DOT: Record<Difficulty, string> = {
   Easy: "bg-success",
@@ -20,8 +20,28 @@ const DIFFICULTY_DOT: Record<Difficulty, string> = {
   Hard: "bg-destructive",
 };
 
-function invertStatus(status: SolveStatusFilter): SolveStatusFilter {
-  return status === "solved" ? "unsolved" : "solved";
+function OperatorSelect({
+  value,
+  onChange,
+  disabled,
+  label,
+}: {
+  value: FilterOp;
+  onChange: (op: FilterOp) => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as FilterOp)} disabled={disabled}>
+      <SelectTrigger size="sm" className={cn(fieldClass, "gap-1 px-2")} aria-label={label}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent position="popper" className="text-[13px]">
+        <SelectItem value="is">is</SelectItem>
+        <SelectItem value="is-not">is not</SelectItem>
+      </SelectContent>
+    </Select>
+  );
 }
 
 /** Radix select / menu popups render in a portal outside the panel. */
@@ -172,10 +192,7 @@ function TopicsField({
   );
 }
 
-/**
- * LeetCode-style filter builder. The backend ANDs every filter and supports only equality,
- * so "Match all" and "is" are shown as fixed labels rather than selectable operators.
- */
+/** LeetCode-style filter builder. Every row has is / is not; Match All ANDs the rows. */
 export function FilterPanel({
   filters,
   onChange,
@@ -186,11 +203,6 @@ export function FilterPanel({
   triggerClassName,
 }: FilterPanelProps) {
   const [open, setOpen] = useState(false);
-  // Status has two values, so "is not X" is stored as "is <other>"; only the display remembers the operator.
-  const [statusNegated, setStatusNegated] = useState(false);
-  const statusShown = filters.status && statusNegated ? invertStatus(filters.status) : filters.status;
-  const setStatus = (shown: SolveStatusFilter | null, negated = statusNegated) =>
-    onChange({ status: shown && negated ? invertStatus(shown) : shown });
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -262,30 +274,19 @@ export function FilterPanel({
                 label="Status"
                 active={showStatus && filters.status !== null}
                 locked={!showStatus}
-                onClear={() => onChange({ status: null })}
+                onClear={() => onChange({ status: null, statusOp: "is" })}
                 operator={
-                  <Select
-                    value={statusNegated ? "is-not" : "is"}
-                    onValueChange={(v) => {
-                      const negated = v === "is-not";
-                      setStatusNegated(negated);
-                      if (statusShown) setStatus(statusShown, negated);
-                    }}
+                  <OperatorSelect
+                    value={filters.statusOp}
+                    onChange={(statusOp) => onChange({ statusOp })}
                     disabled={!showStatus}
-                  >
-                    <SelectTrigger size="sm" className={cn(fieldClass, "gap-1 px-2")} aria-label="Status operator">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="text-[13px]">
-                      <SelectItem value="is">is</SelectItem>
-                      <SelectItem value="is-not">is not</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    label="Status operator"
+                  />
                 }
               >
                 <Select
-                  value={showStatus ? (statusShown ?? "any") : "any"}
-                  onValueChange={(v) => setStatus(v === "any" ? null : (v as SolveStatusFilter))}
+                  value={showStatus ? (filters.status ?? "any") : "any"}
+                  onValueChange={(v) => onChange({ status: v === "any" ? null : (v as SolveStatusFilter), ...(v === "any" ? { statusOp: "is" } : {}) })}
                   disabled={!showStatus}
                 >
                   <SelectTrigger size="sm" className={fieldClass} aria-label="Status" title={showStatus ? undefined : "Sign in to filter by status"}>
@@ -303,11 +304,20 @@ export function FilterPanel({
                 icon={Gauge}
                 label="Difficulty"
                 active={filters.difficulty !== null}
-                onClear={() => onChange({ difficulty: null })}
+                onClear={() => onChange({ difficulty: null, difficultyOp: "is" })}
+                operator={
+                  <OperatorSelect
+                    value={filters.difficultyOp}
+                    onChange={(difficultyOp) => onChange({ difficultyOp })}
+                    label="Difficulty operator"
+                  />
+                }
               >
                 <Select
                   value={filters.difficulty ?? "any"}
-                  onValueChange={(v) => onChange({ difficulty: v === "any" ? null : (v as Difficulty) })}
+                  onValueChange={(v) =>
+                    onChange({ difficulty: v === "any" ? null : (v as Difficulty), ...(v === "any" ? { difficultyOp: "is" } : {}) })
+                  }
                 >
                   <SelectTrigger size="sm" className={fieldClass} aria-label="Difficulty">
                     <SelectValue />
@@ -328,7 +338,14 @@ export function FilterPanel({
                 icon={Tags}
                 label="Topics"
                 active={filters.tags.length > 0}
-                onClear={() => onChange({ tags: [] })}
+                onClear={() => onChange({ tags: [], tagsOp: "is" })}
+                operator={
+                  <OperatorSelect
+                    value={filters.tagsOp}
+                    onChange={(tagsOp) => onChange({ tagsOp })}
+                    label="Topics operator"
+                  />
+                }
               >
                 <TopicsField tags={tags} selected={filters.tags} onToggle={onToggleTag} />
               </FilterRow>
