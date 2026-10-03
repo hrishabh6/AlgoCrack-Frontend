@@ -6,7 +6,7 @@
 
 @theme {
   /* Single application shell width shared by navbar, pages and footer. */
-  --container-shell: 90rem;
+  --container-shell: 100rem;
 }
 
 @theme inline {
