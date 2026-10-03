@@ -14,7 +14,11 @@ export function Footer() {
   const pathname = usePathname();
 
   // Hide footer on problem pages where the editor takes full height
-  if (pathname.startsWith("/problems/") && pathname.split("/").length > 2) {
+  if (
+    pathname.startsWith("/problems/") &&
+    !pathname.startsWith("/problems/lists") &&
+    pathname.split("/").length > 2
+  ) {
     return null;
   }
 

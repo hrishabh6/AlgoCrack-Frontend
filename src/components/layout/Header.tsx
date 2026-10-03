@@ -27,7 +27,11 @@ const navLinks = [
 ];
 
 function isProblemWorkspace(pathname: string) {
-  return pathname.startsWith("/problems/") && pathname.split("/").length > 2;
+  return (
+    pathname.startsWith("/problems/") &&
+    !pathname.startsWith("/problems/lists") &&
+    pathname.split("/").length > 2
+  );
 }
 
 export function Header() {
