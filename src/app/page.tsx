@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, FlaskConical, History, Languages, Play, Send, ShieldCheck } from "lucide-react";
 import { SUPPORTED_LANGUAGES } from "@/lib/constants";
 import { Container } from "@/components/shared";
+import { DailyChallengeCard } from "@/components/daily-challenge/DailyChallengeCard";
+import { getTodayDailyChallenge } from "@/lib/api/daily-challenge-service";
 
 const languageList = SUPPORTED_LANGUAGES.map((l) => l.label).join(" and ");
 
@@ -39,7 +41,9 @@ const steps = [
   { label: "Submit", detail: "Get an official verdict with runtime and memory." },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const dailyChallenge = await getTodayDailyChallenge({ server: true });
+
   return (
     <div className="flex flex-col">
       <section className="border-b">
@@ -72,6 +76,12 @@ export default function HomePage() {
           </div>
 
           <EditorPreview />
+        </Container>
+      </section>
+
+      <section className="border-b bg-surface/30">
+        <Container className="py-10 md:py-12">
+          <DailyChallengeCard challenge={dailyChallenge} />
         </Container>
       </section>
 

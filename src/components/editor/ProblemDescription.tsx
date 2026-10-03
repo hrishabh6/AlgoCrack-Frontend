@@ -5,7 +5,7 @@ import { SubmissionsList } from "./SubmissionsList";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEditorStore } from "@/store";
-import { FileText, BookOpen, History, Activity, Building2 } from "lucide-react";
+import { FileText, BookOpen, History, Activity, Building2, Sparkles } from "lucide-react";
 import { SubmissionResult } from "./SubmissionResult";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -20,7 +20,11 @@ type DescriptionTab = "description" | "solutions" | "submissions" | "results";
 
 const proseClass = "prose prose-sm dark:prose-invert problem-prose max-w-none";
 
-export function ProblemDescription() {
+type ProblemDescriptionProps = {
+    dailyChallengeProblemId?: number | null;
+};
+
+export function ProblemDescription({ dailyChallengeProblemId = null }: ProblemDescriptionProps) {
     const { currentProblem, activeTab, setActiveTab } = useEditorStore();
 
     if (!currentProblem) {
@@ -40,6 +44,8 @@ export function ProblemDescription() {
 
     // Parse the description to separate main text from examples
     const { description, examples } = parseProblemDescription(currentProblem.questionDescription || "");
+    const isDailyChallenge =
+        dailyChallengeProblemId != null && currentProblem.id === dailyChallengeProblemId;
 
     return (
         <Tabs
@@ -80,6 +86,12 @@ export function ProblemDescription() {
                                 {currentProblem.questionTitle}
                             </h1>
                             <div className="flex flex-wrap items-center gap-1.5">
+                                {isDailyChallenge && (
+                                    <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                        <Sparkles className="size-3" aria-hidden="true" />
+                                        Daily Challenge
+                                    </span>
+                                )}
                                 <DifficultyBadge difficulty={currentProblem.difficultyLevel} />
                                 {currentProblem.company && (
                                     <TagChip className="gap-1">
