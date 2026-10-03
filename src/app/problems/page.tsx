@@ -83,7 +83,7 @@ function ProblemsPageContent() {
   const filtered = hasActiveFilters(filters);
 
   return (
-    <PageContainer size="wide">
+    <PageContainer>
       <LibraryLayout active={{ kind: "all" }}>
         <PageHeader
           title="Problems"
@@ -182,7 +182,7 @@ export default function ProblemsPage() {
   return (
     <Suspense
       fallback={
-        <PageContainer size="wide">
+        <PageContainer>
           <ProblemsTableSkeleton />
         </PageContainer>
       }

@@ -42,7 +42,7 @@ function formatDate(value: string | null | undefined): string | null {
 
 function PageFrame({ active, children }: { active: LibrarySection; children: React.ReactNode }) {
   return (
-    <PageContainer size="wide">
+    <PageContainer>
       <LibraryLayout active={active}>{children}</LibraryLayout>
     </PageContainer>
   );

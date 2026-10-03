@@ -62,7 +62,7 @@ export default function SubmissionsPage() {
     const hasNext = submissions.length === PAGE_SIZE;
 
     return (
-        <PageContainer size="wide">
+        <PageContainer>
             <PageHeader title="Submissions" description="Your submission history across all problems." />
 
             <div className="mt-6">
