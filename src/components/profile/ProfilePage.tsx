@@ -14,14 +14,16 @@ import { ContributionHeatmap } from "./ContributionHeatmap";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageContainer, StatCard, TagChip } from "@/components/shared";
-import { CheckCircle2, Code2, LogIn, Percent } from "lucide-react";
+import { CheckCircle2, Code2, Flame, LogIn, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStreakStore } from "@/store/useStreakStore";
 
 export function ProfilePage() {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const [profile, setProfile] = useState<UserProfileResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const streak = useStreakStore((s) => s.streak);
 
     useEffect(() => {
         if (authLoading) return;
@@ -132,7 +134,17 @@ export function ProfilePage() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
                 {/* Main column */}
                 <div className="min-w-0 space-y-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <StatCard
+                            label="Streak"
+                            icon={<Flame className={cn(streak?.activeToday && streak.currentStreak > 0 && "text-warning")} />}
+                            value={streak ? `${streak.currentStreak}d` : "—"}
+                            helper={
+                                streak
+                                    ? `Best ${streak.longestStreak}d · ${streak.activeToday ? "active today" : streak.currentStreak > 0 ? "submit today to keep it" : "submit to start one"}`
+                                    : "Daily submission streak"
+                            }
+                        />
                         <StatCard
                             label="Solved"
                             icon={<CheckCircle2 />}
@@ -247,8 +259,8 @@ function ProfileSkeleton() {
             </div>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        {Array.from({ length: 3 }).map((_, i) => (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
                             <Skeleton key={i} className="h-[92px] w-full rounded-lg" />
                         ))}
                     </div>
