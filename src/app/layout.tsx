@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider, DevErrorSilencer, ProblemLibrarySync } from "@/components/providers";
 import { Header, Footer } from "@/components/layout";
 import { Toaster } from "@/components/ui/toaster";
+import { ListDialogs } from "@/components/problems/list-dialogs";
 import { AuthProvider } from "@/context/AuthContext";
 import Script from "next/script";
 import "./globals.css";
@@ -77,6 +78,7 @@ export default function RootLayout({
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            <ListDialogs />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

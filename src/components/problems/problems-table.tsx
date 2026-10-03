@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SearchX } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,87 +10,138 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DifficultyBadge, EmptyState, TagChip } from "@/components/shared";
-import { QuestionSummary } from "@/types";
+import { DIFFICULTY_TEXT, DifficultyBadge, TagChip } from "@/components/shared";
+import { cn } from "@/lib/utils";
 import { problemPath } from "@/lib/slug-utils";
+import type { QuestionSummary } from "@/types";
+import { SaveProblemMenu } from "./save-problem-menu";
 
 interface ProblemsTableProps {
   questions: QuestionSummary[];
+  /** Ids the signed-in user has solved; omit to hide the status column. */
+  solvedIds?: ReadonlySet<number>;
+  /** Rendered instead of the table when there are no rows. */
+  emptyState: React.ReactNode;
+  /** Highlights a matching tag chip (e.g. the active topic filters). */
+  activeTags?: readonly string[];
 }
 
 const MAX_TAGS = 3;
 
-export function ProblemsTable({ questions }: ProblemsTableProps) {
-  if (questions.length === 0) {
-    return (
-      <div className="rounded-lg border bg-card animate-in fade-in-50">
-        <EmptyState
-          icon={<SearchX />}
-          title="No problems found"
-          description="No problems match your current filters. Try adjusting them."
-          action={
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/problems">Clear filters</Link>
-            </Button>
-          }
-        />
-      </div>
-    );
+/** Acceptance is only meaningful once a problem has evaluated submissions. */
+export function formatAcceptance(question: QuestionSummary): string | null {
+  if (!question.totalSubmissions || question.acceptanceRate === null || question.acceptanceRate === undefined) {
+    return null;
   }
+  return `${question.acceptanceRate.toFixed(1)}%`;
+}
+
+function TagList({ tags, activeTags }: { tags: string[]; activeTags?: readonly string[] }) {
+  if (!tags || tags.length === 0) return <span className="text-xs text-subtle-foreground">—</span>;
+  const ordered = activeTags?.length
+    ? [...tags].sort((a, b) => Number(activeTags.includes(b)) - Number(activeTags.includes(a)))
+    : tags;
+  return (
+    <div className="flex items-center gap-1">
+      {ordered.slice(0, MAX_TAGS).map((tag) => (
+        <TagChip
+          key={tag}
+          className={cn("max-w-[8.5rem] truncate", activeTags?.includes(tag) && "border-primary/40 text-primary")}
+        >
+          {tag}
+        </TagChip>
+      ))}
+      {ordered.length > MAX_TAGS && (
+        <TagChip className="bg-transparent" title={ordered.slice(MAX_TAGS).join(", ")}>
+          +{ordered.length - MAX_TAGS}
+        </TagChip>
+      )}
+    </div>
+  );
+}
+
+export function ProblemsTable({ questions, solvedIds, emptyState, activeTags }: ProblemsTableProps) {
+  if (questions.length === 0) {
+    return <div className="rounded-lg border bg-card animate-in fade-in-50">{emptyState}</div>;
+  }
+
+  const showStatus = solvedIds !== undefined;
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader className="bg-surface-2">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-16 pl-4">#</TableHead>
+            {showStatus && (
+              <TableHead className="w-9 pl-3 pr-0">
+                <span className="sr-only">Status</span>
+              </TableHead>
+            )}
+            <TableHead className={cn("w-14", !showStatus && "pl-4")}>#</TableHead>
             <TableHead>Title</TableHead>
-            <TableHead className="w-28">Difficulty</TableHead>
-            <TableHead className="hidden w-28 text-right md:table-cell">Acceptance</TableHead>
-            <TableHead className="hidden lg:table-cell">Tags</TableHead>
+            <TableHead className="hidden w-24 sm:table-cell">Difficulty</TableHead>
+            <TableHead className="hidden w-24 text-right md:table-cell">Acceptance</TableHead>
+            <TableHead className="hidden w-[19rem] lg:table-cell">Topics</TableHead>
+            <TableHead className="w-11 pr-2">
+              <span className="sr-only">Save</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {questions.map((question) => (
-            <TableRow key={question.id} className="group">
-              <TableCell className="pl-4 font-mono text-xs tabular-nums text-subtle-foreground">
-                {question.id}
-              </TableCell>
-              <TableCell className="max-w-0 w-full">
-                <Link
-                  href={problemPath(question.questionTitle, question.id)}
-                  className="block truncate py-0.5 text-sm font-medium text-foreground transition-colors group-hover:text-primary focus-visible:text-primary"
+          {questions.map((question) => {
+            const solved = solvedIds?.has(question.id) ?? false;
+            const acceptance = formatAcceptance(question);
+            return (
+              <TableRow key={question.id} className="group">
+                {showStatus && (
+                  <TableCell className="pl-3 pr-0">
+                    {solved ? (
+                      <CheckCircle2 className="size-4 text-success" aria-label="Solved" />
+                    ) : (
+                      <span className="sr-only">Not solved</span>
+                    )}
+                  </TableCell>
+                )}
+                <TableCell
+                  className={cn("font-mono text-xs tabular-nums text-subtle-foreground", !showStatus && "pl-4")}
                 >
-                  {question.questionTitle}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <DifficultyBadge difficulty={question.difficultyLevel} />
-              </TableCell>
-              <TableCell className="hidden text-right font-mono text-xs tabular-nums text-muted-foreground md:table-cell">
-                {question.acceptanceRate ? `${question.acceptanceRate.toFixed(1)}%` : "—"}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                <div className="flex items-center gap-1">
-                  {question.tags && question.tags.length > 0 ? (
-                    question.tags.slice(0, MAX_TAGS).map((tag) => <TagChip key={tag}>{tag}</TagChip>)
-                  ) : (
-                    <span className="text-xs text-subtle-foreground">—</span>
+                  {question.id}
+                </TableCell>
+                <TableCell className="min-w-0">
+                  <Link
+                    href={problemPath(question.questionTitle, question.id)}
+                    className="block truncate py-0.5 text-sm font-medium text-foreground transition-colors group-hover:text-primary focus-visible:text-primary focus-visible:outline-none"
+                  >
+                    {question.questionTitle}
+                  </Link>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground sm:hidden">
+                    <span className={cn("font-medium", DIFFICULTY_TEXT[question.difficultyLevel])}>
+                      {question.difficultyLevel}
+                    </span>
+                    {acceptance && <span className="font-mono tabular-nums">{acceptance}</span>}
+                    {question.tags?.[0] && <span className="truncate">{question.tags[0]}</span>}
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <DifficultyBadge difficulty={question.difficultyLevel} />
+                </TableCell>
+                <TableCell className="hidden text-right font-mono text-xs tabular-nums text-muted-foreground md:table-cell">
+                  {acceptance ?? (
+                    <span className="text-subtle-foreground" title="No submissions yet">
+                      —
+                    </span>
                   )}
-                  {question.tags && question.tags.length > MAX_TAGS && (
-                    <TagChip
-                      className="bg-transparent"
-                      title={question.tags.slice(MAX_TAGS).join(", ")}
-                    >
-                      +{question.tags.length - MAX_TAGS}
-                    </TagChip>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell className="hidden overflow-hidden lg:table-cell">
+                  <TagList tags={question.tags} activeTags={activeTags} />
+                </TableCell>
+                <TableCell className="pr-2 text-right">
+                  <SaveProblemMenu problemId={question.id} problemTitle={question.questionTitle} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
@@ -108,9 +159,10 @@ export function ProblemsTableSkeleton({ rows = 10 }: { rows?: number }) {
         <div key={i} className="flex h-11 items-center gap-4 border-b border-border/70 px-4 last:border-0">
           <Skeleton className="h-3 w-6" />
           <Skeleton className="h-3.5 flex-1 max-w-xs" style={{ maxWidth: `${40 + ((i * 37) % 45)}%` }} />
-          <Skeleton className="ml-auto h-5 w-14" />
+          <Skeleton className="ml-auto hidden h-5 w-14 sm:block" />
           <Skeleton className="hidden h-3 w-12 md:block" />
           <Skeleton className="hidden h-5 w-28 lg:block" />
+          <Skeleton className="size-5 sm:ml-0 ml-auto" />
         </div>
       ))}
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 interface ProblemsPaginationProps {
     currentPage: number;
     totalPages: number;
+    /** Builds the link for a zero-based page index; defaults to the current path with `page` replaced. */
+    pageHref?: (page: number) => string;
 }
 
 /** Zero-based page indexes to render, with `null` marking an ellipsis gap. */
@@ -26,14 +28,16 @@ function pageWindow(current: number, total: number): Array<number | null> {
 export function ProblemsPagination({
     currentPage,
     totalPages,
+    pageHref,
 }: ProblemsPaginationProps) {
     const searchParams = useSearchParams();
+    const pathname = usePathname();
 
-    // Helper to create page links keeping other params
-    const createPageURL = (pageNumber: number | string) => {
+    const createPageURL = (pageNumber: number) => {
+        if (pageHref) return pageHref(pageNumber);
         const params = new URLSearchParams(searchParams.toString());
         params.set("page", pageNumber.toString());
-        return `/problems?${params.toString()}`;
+        return `${pathname}?${params.toString()}`;
     };
 
     if (totalPages <= 1) return null;
