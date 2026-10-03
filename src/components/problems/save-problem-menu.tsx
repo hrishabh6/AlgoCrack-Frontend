@@ -22,10 +22,12 @@ interface SaveProblemMenuProps {
   problemId: number;
   problemTitle: string;
   className?: string;
+  /** On hover-capable layouts, hide the button until its row is hovered unless the problem is saved. */
+  revealOnHover?: boolean;
 }
 
 /** Bookmark button that toggles Saved and custom-list membership for one problem. */
-export function SaveProblemMenu({ problemId, problemTitle, className }: SaveProblemMenuProps) {
+export function SaveProblemMenu({ problemId, problemTitle, className, revealOnHover }: SaveProblemMenuProps) {
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -53,7 +55,14 @@ export function SaveProblemMenu({ problemId, problemTitle, className }: SaveProb
         <Button
           variant="ghost"
           size="icon-sm"
-          className={cn("size-7", isMarked && "text-primary hover:text-primary", className)}
+          className={cn(
+            "size-7",
+            isMarked && "text-primary hover:text-primary",
+            revealOnHover &&
+              !isMarked &&
+              "md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 md:data-[state=open]:opacity-100",
+            className
+          )}
           aria-label={isMarked ? `Saved: ${summary}. Edit lists for ${problemTitle}` : `Save ${problemTitle}`}
           title={isMarked ? summary : "Save to a list"}
         >

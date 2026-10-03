@@ -145,7 +145,6 @@ function ProblemsPageContent() {
               <ProblemsTable
                 questions={data.content}
                 solvedIds={solvedIds}
-                activeTags={filters.tags}
                 emptyState={
                   <EmptyState
                     icon={<SearchX />}
