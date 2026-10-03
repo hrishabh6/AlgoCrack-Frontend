@@ -1,4 +1,5 @@
 import { getQuestionById, getQuestions, getTestCases } from "@/lib/api/problem-service";
+import { getTodayDailyChallenge } from "@/lib/api/daily-challenge-service";
 import { EditorLayout } from "@/components/editor/EditorLayout";
 import { notFound } from "next/navigation";
 import { extractProblemId, slugify } from "@/lib/slug-utils";
@@ -45,14 +46,17 @@ export default async function ProblemEditorPage(props: {
 
     let problem;
     let testCases: TestCase[] = [];
+    let dailyChallengeProblemId: number | null = null;
 
     try {
-        const [p, t] = await Promise.all([
+        const [p, t, potd] = await Promise.all([
             getQuestionById(problemId),
             getTestCases(problemId).catch(() => []),
+            getTodayDailyChallenge({ server: true }),
         ]);
         problem = p;
         testCases = t;
+        dailyChallengeProblemId = potd?.problem.id ?? null;
     } catch (error) {
         console.error(`Failed to fetch problem ${problemId}:`, error);
         return (
@@ -71,6 +75,10 @@ export default async function ProblemEditorPage(props: {
         );
     }
     return (
-        <EditorLayout problem={problem} testCases={testCases} />
+        <EditorLayout
+            problem={problem}
+            testCases={testCases}
+            dailyChallengeProblemId={dailyChallengeProblemId}
+        />
     );
 }

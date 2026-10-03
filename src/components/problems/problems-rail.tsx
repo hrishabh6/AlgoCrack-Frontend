@@ -12,6 +12,7 @@ import { useStreakStore } from "@/store/useStreakStore";
 import { useUserProgressStore } from "@/store/useUserProgressStore";
 import type { HeatmapResponse } from "@/types";
 import { MOCK_FRIENDS_CHECKED_IN, MOCK_TRENDING_COMPANIES } from "./rail/mock-data";
+import { DailyChallengeRailCard } from "@/components/daily-challenge/DailyChallengeRailCard";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const COMPANIES_PER_PAGE = 10;
@@ -327,6 +328,7 @@ export function ProblemsRail() {
   if (isLoading) return null;
   return (
     <>
+      <DailyChallengeRailCard />
       {isAuthenticated ? <CalendarCard /> : <SignInCard />}
       {isAuthenticated && <ProgressCard />}
       <FriendsCard />

@@ -17,6 +17,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 interface EditorLayoutProps {
     problem: QuestionDetail;
     testCases: TestCase[];
+    /** When set and equal to the loaded problem id, show the daily challenge badge. */
+    dailyChallengeProblemId?: number | null;
 }
 
 function Pane({ children }: { children: React.ReactNode }) {
@@ -27,7 +29,7 @@ function Pane({ children }: { children: React.ReactNode }) {
     );
 }
 
-export function EditorLayout({ problem, testCases }: EditorLayoutProps) {
+export function EditorLayout({ problem, testCases, dailyChallengeProblemId = null }: EditorLayoutProps) {
     const { 
         setProblem, 
         initializeTestcases, 
@@ -60,7 +62,7 @@ export function EditorLayout({ problem, testCases }: EditorLayoutProps) {
                 {/* Left Panel: Problem Description */}
                 <ResizablePanel defaultSize={isDesktop ? 42 : 40} minSize={isDesktop ? 25 : 15} maxSize={75}>
                     <Pane>
-                        <ProblemDescription />
+                        <ProblemDescription dailyChallengeProblemId={dailyChallengeProblemId} />
                     </Pane>
                 </ResizablePanel>
 

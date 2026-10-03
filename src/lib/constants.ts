@@ -39,6 +39,9 @@ export const ENDPOINTS = {
 
   // Problem lists (always authenticated)
   PROBLEM_LISTS: "/api/v1/problem-lists",
+
+  // Daily challenge (public read)
+  DAILY_CHALLENGES: "/api/v1/daily-challenges",
 } as const;
 
 // Difficulty colors
