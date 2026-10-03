@@ -30,7 +30,7 @@ export function formatAcceptance(question: QuestionSummary): string | null {
   return `${question.acceptanceRate.toFixed(1)}%`;
 }
 
-const cell = "py-2.5 first:rounded-l-lg last:rounded-r-lg";
+const cell = "py-2.5 transition-colors first:rounded-l-lg last:rounded-r-lg group-odd:bg-surface group-hover:bg-accent/70";
 
 export function ProblemsTable({ questions, solvedIds, emptyState }: ProblemsTableProps) {
   if (questions.length === 0) {
@@ -40,7 +40,7 @@ export function ProblemsTable({ questions, solvedIds, emptyState }: ProblemsTabl
   const showStatus = solvedIds !== undefined;
 
   return (
-    <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+    <table className="w-full border-separate border-spacing-0 text-sm">
       <thead className="sr-only">
         <tr>
           {showStatus && <th scope="col">Status</th>}
@@ -59,9 +59,9 @@ export function ProblemsTable({ questions, solvedIds, emptyState }: ProblemsTabl
             className: "text-muted-foreground",
           };
           return (
-            <tr key={question.id} className="group transition-colors odd:bg-surface hover:bg-accent/70">
+            <tr key={question.id} className="group">
               {showStatus && (
-                <td className={cn(cell, "w-10 pl-3")}>
+                <td className={cn(cell, "w-10 min-w-10 pl-3")}>
                   {solved ? (
                     <CheckCircle2 className="size-4 text-success" aria-label="Solved" />
                   ) : (
@@ -69,7 +69,7 @@ export function ProblemsTable({ questions, solvedIds, emptyState }: ProblemsTabl
                   )}
                 </td>
               )}
-              <td className={cn(cell, "min-w-0 pr-3", !showStatus && "pl-4")}>
+              <td className={cn(cell, "w-full max-w-0 pr-3", !showStatus && "pl-4")}>
                 <Link
                   href={problemPath(question.questionTitle, question.id)}
                   className="block truncate text-[13.5px] font-medium text-foreground transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none"
@@ -77,15 +77,15 @@ export function ProblemsTable({ questions, solvedIds, emptyState }: ProblemsTabl
                   {question.id}. {question.questionTitle}
                 </Link>
               </td>
-              <td className={cn(cell, "hidden w-24 pr-4 text-right font-mono text-xs tabular-nums text-muted-foreground sm:table-cell")}>
+              <td className={cn(cell, "hidden whitespace-nowrap pr-6 text-right font-mono text-xs tabular-nums text-muted-foreground sm:table-cell")}>
                 {acceptance ?? (
                   <span className="text-subtle-foreground" title="No submissions yet">
                     —
                   </span>
                 )}
               </td>
-              <td className={cn(cell, "w-16 text-[13px] font-medium sm:w-20", difficulty.className)}>{difficulty.label}</td>
-              <td className={cn(cell, "w-11 pr-2 text-right")}>
+              <td className={cn(cell, "min-w-16 whitespace-nowrap pr-2 text-[13px] font-medium sm:min-w-20", difficulty.className)}>{difficulty.label}</td>
+              <td className={cn(cell, "pr-2 text-right")}>
                 <SaveProblemMenu problemId={question.id} problemTitle={question.questionTitle} revealOnHover />
               </td>
             </tr>
