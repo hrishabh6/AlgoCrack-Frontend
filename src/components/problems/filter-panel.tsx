@@ -20,6 +20,10 @@ const DIFFICULTY_DOT: Record<Difficulty, string> = {
   Hard: "bg-destructive",
 };
 
+function invertStatus(status: SolveStatusFilter): SolveStatusFilter {
+  return status === "solved" ? "unsolved" : "solved";
+}
+
 /** Radix select / menu popups render in a portal outside the panel. */
 const RADIX_POPUP = "[data-radix-popper-content-wrapper]";
 
@@ -43,6 +47,7 @@ function FilterRow({
   active,
   locked,
   onClear,
+  operator,
   children,
 }: {
   icon: React.ComponentType<{ className?: string }>;
@@ -50,10 +55,12 @@ function FilterRow({
   active: boolean;
   locked?: boolean;
   onClear: () => void;
+  /** Operator control; defaults to a fixed "is". */
+  operator?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[6.25rem_2.75rem_minmax(0,1fr)_1.75rem] items-center gap-2 sm:grid-cols-[7.5rem_3.5rem_minmax(0,1fr)_1.75rem]">
+    <div className="grid grid-cols-[5.25rem_4.5rem_minmax(0,1fr)_1.75rem] items-center gap-2 sm:grid-cols-[7.5rem_5rem_minmax(0,1fr)_1.75rem]">
       <span
         className={cn(
           "flex items-center gap-2 text-[13px]",
@@ -64,15 +71,17 @@ function FilterRow({
         <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-subtle-foreground")} />
         {label}
       </span>
-      <span
-        className={cn(
-          fieldClass,
-          "flex items-center text-muted-foreground hover:bg-background/60",
-          locked && "opacity-50"
-        )}
-      >
-        is
-      </span>
+      {operator ?? (
+        <span
+          className={cn(
+            fieldClass,
+            "flex items-center text-muted-foreground hover:bg-background/60",
+            locked && "opacity-50"
+          )}
+        >
+          is
+        </span>
+      )}
       {children}
       <Button
         type="button"
@@ -177,6 +186,11 @@ export function FilterPanel({
   triggerClassName,
 }: FilterPanelProps) {
   const [open, setOpen] = useState(false);
+  // Status has two values, so "is not X" is stored as "is <other>"; only the display remembers the operator.
+  const [statusNegated, setStatusNegated] = useState(false);
+  const statusShown = filters.status && statusNegated ? invertStatus(filters.status) : filters.status;
+  const setStatus = (shown: SolveStatusFilter | null, negated = statusNegated) =>
+    onChange({ status: shown && negated ? invertStatus(shown) : shown });
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -229,7 +243,7 @@ export function FilterPanel({
           ref={panelRef}
           role="dialog"
           aria-label="Filter problems"
-          className="absolute left-0 top-full z-40 mt-2 w-full rounded-xl border border-border bg-popover p-3 shadow-2xl shadow-black/40 animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 sm:w-[32rem]"
+          className="absolute left-0 top-full z-40 mt-2 w-full rounded-xl border border-border bg-popover p-3 shadow-2xl shadow-black/40 animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 sm:w-[34rem]"
         >
           <div className="rounded-lg border border-border/70 bg-surface/70 p-3">
             <p className="mb-3 flex items-center gap-2 text-[13px] text-muted-foreground">
@@ -247,10 +261,29 @@ export function FilterPanel({
                 active={showStatus && filters.status !== null}
                 locked={!showStatus}
                 onClear={() => onChange({ status: null })}
+                operator={
+                  <Select
+                    value={statusNegated ? "is-not" : "is"}
+                    onValueChange={(v) => {
+                      const negated = v === "is-not";
+                      setStatusNegated(negated);
+                      if (statusShown) setStatus(statusShown, negated);
+                    }}
+                    disabled={!showStatus}
+                  >
+                    <SelectTrigger size="sm" className={cn(fieldClass, "gap-1 px-2")} aria-label="Status operator">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper" className="text-[13px]">
+                      <SelectItem value="is">is</SelectItem>
+                      <SelectItem value="is-not">is not</SelectItem>
+                    </SelectContent>
+                  </Select>
+                }
               >
                 <Select
-                  value={showStatus ? (filters.status ?? "any") : "any"}
-                  onValueChange={(v) => onChange({ status: v === "any" ? null : (v as SolveStatusFilter) })}
+                  value={showStatus ? (statusShown ?? "any") : "any"}
+                  onValueChange={(v) => setStatus(v === "any" ? null : (v as SolveStatusFilter))}
                   disabled={!showStatus}
                 >
                   <SelectTrigger size="sm" className={fieldClass} aria-label="Status" title={showStatus ? undefined : "Sign in to filter by status"}>
