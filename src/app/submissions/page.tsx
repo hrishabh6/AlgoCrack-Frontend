@@ -122,16 +122,16 @@ export default function SubmissionsPage() {
                 ) : (
                     <>
                         <div className="overflow-hidden rounded-lg border bg-card">
-                            <Table>
+                            <Table className="lg:table-fixed">
                                 <TableHeader className="bg-surface-2">
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead className="pl-4">Status</TableHead>
+                                        <TableHead className="pl-4 lg:w-44">Status</TableHead>
                                         <TableHead>Problem</TableHead>
-                                        <TableHead className="hidden sm:table-cell">Language</TableHead>
-                                        <TableHead className="text-right">Runtime</TableHead>
-                                        <TableHead className="hidden text-right md:table-cell">Memory</TableHead>
-                                        <TableHead className="hidden text-right md:table-cell">Tests</TableHead>
-                                        <TableHead className="pr-4 text-right">Submitted</TableHead>
+                                        <TableHead className="hidden sm:table-cell lg:w-32">Language</TableHead>
+                                        <TableHead className="text-right lg:w-28">Runtime</TableHead>
+                                        <TableHead className="hidden text-right md:table-cell lg:w-28">Memory</TableHead>
+                                        <TableHead className="hidden text-right md:table-cell lg:w-24">Tests</TableHead>
+                                        <TableHead className="pr-4 text-right lg:w-36">Submitted</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
