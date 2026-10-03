@@ -72,7 +72,7 @@ function NavItem({
         "group flex h-8 items-center gap-2.5 rounded-md px-2 text-sm transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
         active
-          ? "bg-selected font-medium text-selected-foreground"
+          ? "bg-accent font-medium text-foreground"
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
     >
