@@ -20,6 +20,7 @@ import { ProblemActions } from "@/components/problems/problem-actions";
 import { BrandMark } from "@/components/shared";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
+import { StreakBadge } from "./StreakBadge";
 
 const navLinks = [
   { href: "/problems", label: "Problems", icon: ListChecks },
@@ -114,6 +115,7 @@ export function Header() {
         )}
 
         <div className="ml-auto flex items-center gap-1">
+          {isAuthenticated && <StreakBadge />}
           <Button
             variant="ghost"
             size="icon-sm"
