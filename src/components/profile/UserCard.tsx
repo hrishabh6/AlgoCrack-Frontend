@@ -15,6 +15,9 @@ import {
 
 interface UserCardProps {
     user: UserDetails;
+    rankTier?: string | null;
+    totalScore?: number | null;
+    leaderboardPosition?: number | null;
 }
 
 function resolveSocialUrl(value: string, base: string): string {
@@ -24,7 +27,7 @@ function resolveSocialUrl(value: string, base: string): string {
 }
 
 /** Identity header for the profile page: avatar, name, headline and profile links. */
-export function UserCard({ user }: UserCardProps) {
+export function UserCard({ user, rankTier, totalScore, leaderboardPosition }: UserCardProps) {
     const initials = user.name
         ? user.name
             .split(" ")
@@ -80,6 +83,20 @@ export function UserCard({ user }: UserCardProps) {
                         <p className="truncate font-mono text-xs text-muted-foreground">@{user.userId}</p>
                         {user.headline && (
                             <p className="pt-1 text-sm leading-relaxed text-foreground/85">{user.headline}</p>
+                        )}
+                        {(rankTier || totalScore != null) && (
+                            <p className="pt-1 text-xs text-muted-foreground">
+                                {rankTier && <span className="font-medium text-foreground">{rankTier}</span>}
+                                {totalScore != null && (
+                                    <>
+                                        {rankTier ? " · " : ""}
+                                        Score {totalScore.toLocaleString()}
+                                    </>
+                                )}
+                                {leaderboardPosition != null && (
+                                    <> · Rank #{leaderboardPosition}</>
+                                )}
+                            </p>
                         )}
                     </div>
                 </div>

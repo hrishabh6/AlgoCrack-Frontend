@@ -8,6 +8,7 @@ const footerLinks = [
   { href: "/problems", label: "Problems" },
   { href: "/submissions", label: "Submissions" },
   { href: "/profile", label: "Profile" },
+  { href: "/leaderboard", label: "Leaderboard" },
 ];
 
 export function Footer() {
