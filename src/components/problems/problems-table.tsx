@@ -47,7 +47,10 @@ function TagList({ tags, activeTags }: { tags: string[]; activeTags?: readonly s
       {ordered.slice(0, MAX_TAGS).map((tag) => (
         <TagChip
           key={tag}
-          className={cn("max-w-[8.5rem] truncate", activeTags?.includes(tag) && "border-primary/40 text-primary")}
+          className={cn(
+            "max-w-[7.5rem] truncate 2xl:max-w-[10rem]",
+            activeTags?.includes(tag) && "border-primary/40 text-primary"
+          )}
         >
           {tag}
         </TagChip>
@@ -81,8 +84,8 @@ export function ProblemsTable({ questions, solvedIds, emptyState, activeTags }: 
             <TableHead className={cn("w-14", !showStatus && "pl-4")}>#</TableHead>
             <TableHead>Title</TableHead>
             <TableHead className="hidden w-24 sm:table-cell">Difficulty</TableHead>
-            <TableHead className="hidden w-24 text-right md:table-cell">Acceptance</TableHead>
-            <TableHead className="hidden w-[19rem] lg:table-cell">Topics</TableHead>
+            <TableHead className="hidden w-24 text-right md:table-cell xl:w-28 xl:pr-6">Acceptance</TableHead>
+            <TableHead className="hidden w-[17rem] xl:table-cell 2xl:w-[23rem]">Topics</TableHead>
             <TableHead className="w-11 pr-2">
               <span className="sr-only">Save</span>
             </TableHead>
@@ -122,18 +125,23 @@ export function ProblemsTable({ questions, solvedIds, emptyState, activeTags }: 
                     {acceptance && <span className="font-mono tabular-nums">{acceptance}</span>}
                     {question.tags?.[0] && <span className="truncate">{question.tags[0]}</span>}
                   </div>
+                  {question.tags?.length > 0 && (
+                    <p className="hidden truncate text-[11px] text-subtle-foreground sm:block xl:hidden">
+                      {question.tags.join(" · ")}
+                    </p>
+                  )}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <DifficultyBadge difficulty={question.difficultyLevel} />
                 </TableCell>
-                <TableCell className="hidden text-right font-mono text-xs tabular-nums text-muted-foreground md:table-cell">
+                <TableCell className="hidden text-right font-mono text-xs tabular-nums text-muted-foreground md:table-cell xl:pr-6">
                   {acceptance ?? (
                     <span className="text-subtle-foreground" title="No submissions yet">
                       —
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="hidden overflow-hidden lg:table-cell">
+                <TableCell className="hidden overflow-hidden xl:table-cell">
                   <TagList tags={question.tags} activeTags={activeTags} />
                 </TableCell>
                 <TableCell className="pr-2 text-right">
@@ -161,7 +169,7 @@ export function ProblemsTableSkeleton({ rows = 10 }: { rows?: number }) {
           <Skeleton className="h-3.5 flex-1 max-w-xs" style={{ maxWidth: `${40 + ((i * 37) % 45)}%` }} />
           <Skeleton className="ml-auto hidden h-5 w-14 sm:block" />
           <Skeleton className="hidden h-3 w-12 md:block" />
-          <Skeleton className="hidden h-5 w-28 lg:block" />
+          <Skeleton className="hidden h-5 w-28 xl:block" />
           <Skeleton className="size-5 sm:ml-0 ml-auto" />
         </div>
       ))}

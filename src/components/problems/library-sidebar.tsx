@@ -204,9 +204,14 @@ export function LibraryLayout({ active, children }: { active: LibrarySection; ch
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
-    <div className={cn("lg:grid lg:gap-8", collapsed ? "lg:grid-cols-1" : "lg:grid-cols-[13rem_minmax(0,1fr)]")}>
+    <div
+      className={cn(
+        "lg:grid lg:gap-6 xl:gap-8",
+        collapsed ? "lg:grid-cols-1" : "lg:grid-cols-[14rem_minmax(0,1fr)] 2xl:grid-cols-[15rem_minmax(0,1fr)]"
+      )}
+    >
       {!collapsed && (
-        <aside className="hidden lg:block">
+        <aside className="hidden border-r border-border/70 pr-4 lg:block">
           <div className="sticky top-16 max-h-[calc(100dvh-5rem)] overflow-y-auto pb-4">
             <div className="mb-3 flex items-center justify-between px-2">
               <span className="flex items-center gap-2 text-sm font-semibold text-foreground">

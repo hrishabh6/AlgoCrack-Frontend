@@ -103,7 +103,7 @@ export function ProblemsToolbar({ filters, onChange, onToggleTag, onReset, tags,
         onValueChange={setSearch}
         placeholder="Search by title or number"
         aria-label="Search problems"
-        containerClassName="w-full md:max-w-xs"
+        containerClassName="w-full md:max-w-xs 2xl:max-w-sm"
         className="h-8"
       />
 
