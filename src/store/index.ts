@@ -6,3 +6,4 @@ export { useProblemLibraryStore } from "./useProblemLibraryStore";
 export { useToastStore, toast } from "./useToastStore";
 export { useListDialogStore } from "./useListDialogStore";
 export { useStreakStore } from "./useStreakStore";
+export { usePlaygroundStore } from "./usePlaygroundStore";

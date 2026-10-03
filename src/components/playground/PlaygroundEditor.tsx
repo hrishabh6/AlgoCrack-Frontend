@@ -1,29 +1,33 @@
 "use client";
 
 import Editor from "@monaco-editor/react";
-import { useEditorStore, useUserStore } from "@/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { defineAlgoCrackMonacoThemes } from "@/lib/editor/monaco-themes";
+import { useUserStore } from "@/store";
 
-export function CodeEditor() {
-  const { code, language, setCode, setEditorRef } = useEditorStore();
+type PlaygroundEditorProps = {
+  language: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+export function PlaygroundEditor({ language, value, onChange }: PlaygroundEditorProps) {
   const { theme, editorFontSize } = useUserStore();
+  const monacoLanguage = language.toLowerCase() === "python" ? "python" : "java";
 
   return (
     <div className="min-h-0 w-full flex-1 overflow-hidden bg-card">
       <Editor
         height="100%"
-        language={language.toLowerCase()}
-        value={code}
-        onChange={(value) => setCode(value || "")}
+        language={monacoLanguage}
+        value={value}
+        onChange={(v) => onChange(v ?? "")}
         beforeMount={defineAlgoCrackMonacoThemes}
-        onMount={(editor) => setEditorRef(editor)}
         theme={theme === "light" ? "algocrack-light" : "algocrack-dark"}
         loading={
           <div className="flex h-full w-full flex-col gap-2 p-4" aria-label="Loading editor">
             <Skeleton className="h-3.5 w-1/3" />
             <Skeleton className="h-3.5 w-1/2" />
-            <Skeleton className="h-3.5 w-2/5" />
           </div>
         }
         options={{
@@ -31,9 +35,7 @@ export function CodeEditor() {
           fontSize: editorFontSize || 14,
           fontFamily: 'ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace',
           lineNumbers: "on",
-          roundedSelection: false,
           scrollBeyondLastLine: false,
-          readOnly: false,
           automaticLayout: true,
           padding: { top: 12, bottom: 12 },
           formatOnType: true,

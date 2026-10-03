@@ -10,6 +10,10 @@ const serverBaseUrl =
   process.env.INTERNAL_API_BASE_URL?.trim() || gatewayBaseUrl;
 
 // API Configuration
+/** When false, Playground nav/routes stay hidden until ops enables the feature stack-wide. */
+export const PLAYGROUND_UI_ENABLED =
+  process.env.NEXT_PUBLIC_PLAYGROUND_ENABLED === "true";
+
 export const API_URLS = {
   GATEWAY: gatewayBaseUrl,
   // Use this for server-side data fetching (runs inside the K8s pod)
@@ -46,6 +50,9 @@ export const ENDPOINTS = {
   // Progress & gamification (authenticated)
   PROGRESS: "/api/v1/progress",
   LEADERBOARD: "/api/v1/leaderboard",
+
+  // Playground (authenticated; backend may be feature-flagged)
+  PLAYGROUNDS: "/api/v1/playgrounds",
 } as const;
 
 // Difficulty colors

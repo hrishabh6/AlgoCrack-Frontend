@@ -2,6 +2,7 @@
 export * from "./problem-service";
 export * from "./submission-service";
 export * from "./problem-lists-service";
+export * from "./playground-service";
 
 // CXE service - deprecated, export with renamed function to avoid conflict
 export {

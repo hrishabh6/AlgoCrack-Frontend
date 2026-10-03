@@ -5,3 +5,4 @@ export * from "./execution";
 export * from "./profile";
 export * from "./problem-list";
 export * from "./progress";
+export * from "./playground";

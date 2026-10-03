@@ -15,7 +15,7 @@ export function Footer() {
   const pathname = usePathname();
 
   // The coding workspace and the problem browser are full-height app views without a footer.
-  if (pathname.startsWith("/problems")) {
+  if (pathname.startsWith("/problems") || pathname.startsWith("/playground")) {
     return null;
   }
 

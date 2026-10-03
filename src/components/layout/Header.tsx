@@ -15,18 +15,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/store";
 import { cn } from "@/lib/utils";
-import { User, LogOut, Sun, Moon, Menu, ListChecks, History, Trophy } from "lucide-react";
+import { User, LogOut, Sun, Moon, Menu, ListChecks, History, Trophy, Terminal } from "lucide-react";
 import { ProblemActions } from "@/components/problems/problem-actions";
 import { BrandMark, SHELL_CLASS } from "@/components/shared";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { StreakBadge } from "./StreakBadge";
+import { PLAYGROUND_UI_ENABLED } from "@/lib/constants";
 
-const navLinks = [
+const baseNavLinks = [
   { href: "/problems", label: "Problems", icon: ListChecks },
+  { href: "/playground", label: "Playground", icon: Terminal, playgroundOnly: true },
   { href: "/submissions", label: "Submissions", icon: History },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-];
+] as const;
+
+const navLinks = baseNavLinks.filter(
+  (link) => !("playgroundOnly" in link && link.playgroundOnly) || PLAYGROUND_UI_ENABLED
+);
 
 function isProblemWorkspace(pathname: string) {
   return (
