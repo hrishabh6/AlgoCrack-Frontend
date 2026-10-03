@@ -3,3 +3,4 @@ export * from "./problem";
 export * from "./submission";
 export * from "./execution";
 export * from "./profile";
+export * from "./problem-list";

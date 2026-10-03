@@ -19,8 +19,9 @@ export interface QuestionSummary {
   difficultyLevel: Difficulty;
   tags: string[];
   company: string;
-  acceptanceRate?: number;
-  totalSubmissions?: number;
+  /** Percentage with one decimal; null when the problem has no evaluated submissions. */
+  acceptanceRate?: number | null;
+  totalSubmissions?: number | null;
 }
 
 export interface QuestionMetadata {
@@ -111,6 +112,12 @@ export interface QuestionFilters {
   size?: number;
   difficulty?: Difficulty;
   tag?: string;
+  /** Problems must carry every listed tag. */
+  tags?: string[];
   search?: string;
   company?: string;
+  sort?: "id" | "title" | "difficulty";
+  order?: "asc" | "desc";
+  /** Requires authentication; served by /api/v1/user/me/questions. */
+  status?: "solved" | "unsolved";
 }

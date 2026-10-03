@@ -33,6 +33,12 @@ export const ENDPOINTS = {
   // User Profile
   USER_PROFILE: "/api/v1/user/profile",
   USER_HEATMAP: "/api/v1/user/heatmap",
+  USER_STREAK: "/api/v1/user/streak",
+  MY_SOLVED_IDS: "/api/v1/user/me/solved-question-ids",
+  MY_QUESTIONS: "/api/v1/user/me/questions",
+
+  // Problem lists (always authenticated)
+  PROBLEM_LISTS: "/api/v1/problem-lists",
 } as const;
 
 // Difficulty colors

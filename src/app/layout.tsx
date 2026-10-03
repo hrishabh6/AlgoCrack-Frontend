@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider, DevErrorSilencer } from "@/components/providers";
+import { ThemeProvider, DevErrorSilencer, ProblemLibrarySync } from "@/components/providers";
 import { Header, Footer } from "@/components/layout";
+import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/context/AuthContext";
 import Script from "next/script";
 import "./globals.css";
@@ -72,9 +73,11 @@ export default function RootLayout({
         <ThemeProvider>
           <DevErrorSilencer />
           <AuthProvider>
+            <ProblemLibrarySync />
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            <Toaster />
           </AuthProvider>
         </ThemeProvider>
       </body>
