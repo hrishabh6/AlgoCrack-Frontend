@@ -115,7 +115,7 @@ function TopicsField({
   }, [tags, selected, query]);
 
   return (
-    <DropdownMenu onOpenChange={(open) => !open && setQuery("")}>
+    <DropdownMenu modal={false} onOpenChange={(open) => !open && setQuery("")}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -201,7 +201,9 @@ export function FilterPanel({
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as Element;
       if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
-      if (target.closest?.(RADIX_POPUP)) return;
+      // While a modal Radix popup is open the body ignores pointer events, so this lands on <html>;
+      // that press only dismisses the popup.
+      if (target.closest?.(RADIX_POPUP) || document.querySelector(RADIX_POPUP)) return;
       setOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
