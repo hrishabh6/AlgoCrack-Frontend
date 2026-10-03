@@ -6,12 +6,12 @@ import { cn } from "@/lib/utils";
 import { useStreakStore } from "@/store/useStreakStore";
 
 export function streakHint(current: number, activeToday: boolean): string {
-  if (current === 0) return "No active streak. Submit a solution to start one.";
+  if (current === 0) return "No active POTD streak. Solve today's challenge to start one.";
   const days = `${current}-day streak`;
-  return activeToday ? `${days}. You've submitted today.` : `${days}. Submit today to keep it going.`;
+  return activeToday ? `${days}. Today's challenge is solved.` : `${days}. Solve today's challenge to keep it going.`;
 }
 
-/** Navbar indicator for the signed-in user's daily submission streak. */
+/** Navbar indicator for the signed-in user's POTD solve streak. */
 export function StreakBadge({ className }: { className?: string }) {
   const streak = useStreakStore((s) => s.streak);
   if (!streak) return null;
