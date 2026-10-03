@@ -114,6 +114,10 @@ export interface QuestionFilters {
   tag?: string;
   /** Problems must carry every listed tag. */
   tags?: string[];
+  /** Problems must not have this difficulty. */
+  excludeDifficulty?: Difficulty;
+  /** Problems must carry none of these tags. */
+  excludeTags?: string[];
   search?: string;
   company?: string;
   sort?: "id" | "title" | "difficulty";
