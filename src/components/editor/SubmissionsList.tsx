@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useEditorStore, useUserStore } from "@/store";
 import { apiClient } from "@/lib/api-client";
 import { ENDPOINTS } from "@/lib/constants";
@@ -10,6 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, StatusBadge, TagChip } from "@/components/shared";
 import { formatMemoryKb } from "@/lib/verdict";
+import { isComplexityAnalysisEligible } from "@/lib/complexity/eligibility";
+import { ComplexityAnalysisPanel } from "@/components/complexity/ComplexityAnalysisPanel";
 
 export function SubmissionsList() {
     const { currentProblem } = useEditorStore();
@@ -19,6 +21,7 @@ export function SubmissionsList() {
     const [submissions, setSubmissions] = useState<SubmissionDetail[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!userId && !username) return;
@@ -97,6 +100,7 @@ export function SubmissionsList() {
                         <th scope="col" className="px-3 py-2 font-medium">Language</th>
                         <th scope="col" className="px-3 py-2 text-right font-medium">Runtime</th>
                         <th scope="col" className="px-4 py-2 text-right font-medium">Memory</th>
+                        <th scope="col" className="px-4 py-2 text-right font-medium">Complexity</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,8 +112,16 @@ export function SubmissionsList() {
                             year: "numeric",
                         });
 
+                        const complexityEligible = isComplexityAnalysisEligible({
+                            verdict: sub.verdict,
+                            status: sub.status,
+                            language: sub.language,
+                        });
+                        const expanded = expandedSubmissionId === sub.submissionId;
+
                         return (
-                            <tr key={sub.submissionId} className="border-b border-border/70 transition-colors hover:bg-accent/40">
+                            <Fragment key={sub.submissionId}>
+                            <tr className="border-b border-border/70 transition-colors hover:bg-accent/40">
                                 <td className="px-4 py-2.5">
                                     <div className="flex flex-col items-start gap-1">
                                         <StatusBadge verdict={sub.verdict} status={sub.status} />
@@ -125,7 +137,35 @@ export function SubmissionsList() {
                                 <td className="px-4 py-2.5 text-right font-mono text-xs tabular-nums text-muted-foreground">
                                     {formatMemoryKb(sub.memoryKb) ?? "—"}
                                 </td>
+                                <td className="px-4 py-2.5 text-right">
+                                    {complexityEligible ? (
+                                        <button
+                                            type="button"
+                                            className="text-xs font-medium text-primary hover:underline"
+                                            onClick={() =>
+                                                setExpandedSubmissionId(expanded ? null : sub.submissionId)
+                                            }
+                                        >
+                                            {expanded ? "Hide" : "Analyze"}
+                                        </button>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">—</span>
+                                    )}
+                                </td>
                             </tr>
+                            {expanded && complexityEligible && (
+                                <tr key={`${sub.submissionId}-complexity`} className="border-b bg-muted/20">
+                                    <td colSpan={5} className="px-4 py-3">
+                                        <ComplexityAnalysisPanel
+                                            submissionId={sub.submissionId}
+                                            verdict={sub.verdict}
+                                            status={sub.status}
+                                            language={sub.language}
+                                        />
+                                    </td>
+                                </tr>
+                            )}
+                            </Fragment>
                         );
                     })}
                 </tbody>

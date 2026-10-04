@@ -1,6 +1,7 @@
 // API Client barrel export
 export * from "./problem-service";
 export * from "./submission-service";
+export * from "./complexity-analysis";
 export * from "./problem-lists-service";
 export * from "./playground-service";
 

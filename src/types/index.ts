@@ -1,6 +1,7 @@
 // Re-export all types
 export * from "./problem";
 export * from "./submission";
+export * from "./complexity";
 export * from "./execution";
 export * from "./profile";
 export * from "./problem-list";
