@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider, DevErrorSilencer, ProblemLibrarySync } from "@/components/providers";
+import { FocusModeProvider } from "@/components/focus-mode/FocusModeProvider";
 import { Header, Footer } from "@/components/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { ListDialogs } from "@/components/problems/list-dialogs";
@@ -74,9 +75,11 @@ export default function RootLayout({
         <ThemeProvider>
           <DevErrorSilencer />
           <AuthProvider>
-            <ProblemLibrarySync />
-            <Header />
-            <main className="flex-1">{children}</main>
+            <FocusModeProvider>
+              <ProblemLibrarySync />
+              <Header />
+              <main className="flex-1">{children}</main>
+            </FocusModeProvider>
             <Footer />
             <ListDialogs />
             <Toaster />

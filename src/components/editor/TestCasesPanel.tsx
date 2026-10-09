@@ -13,6 +13,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { getVerdictMeta } from "@/lib/verdict";
 import { TONE_TEXT } from "@/components/shared";
 import { workspaceTabTrigger } from "./workspace-styles";
+import { PanelMaximizeToggle } from "@/components/focus-mode/PanelMaximizeToggle";
+import { useWorkspaceLayout } from "@/components/focus-mode/WorkspaceLayoutContext";
+import { shouldIgnorePanelHeaderDoubleClick } from "@/lib/focus-mode/panels";
 
 type PanelTab = "cases" | "result";
 
@@ -46,6 +49,7 @@ export function TestCasesPanel() {
         isSubmitting,
     } = useSubmissionStore();
 
+    const { toggleMaximizedPanel } = useWorkspaceLayout();
     const [newTestcaseInput, setNewTestcaseInput] = useState("");
     const [isAddingNew, setIsAddingNew] = useState(false);
 
@@ -97,23 +101,28 @@ export function TestCasesPanel() {
 
     if (!testcases || testcases.length === 0) {
         return (
-            <div className="flex h-full flex-col items-center justify-center p-4 text-sm text-muted-foreground">
-                <div className="w-full max-w-md">
-                    {addForm}
+            <div className="flex h-full min-h-0 flex-col">
+                <div className="flex shrink-0 justify-end border-b bg-surface-2 pr-1">
+                    <PanelMaximizeToggle panel="console" />
                 </div>
-                {!isAddingNew && (
-                    <>
-                        <p>No test cases available.</p>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-3"
-                            onClick={() => setIsAddingNew(true)}
-                        >
-                            <Plus /> Add test case
-                        </Button>
-                    </>
-                )}
+                <div className="flex flex-1 flex-col items-center justify-center p-4 text-sm text-muted-foreground">
+                    <div className="w-full max-w-md">
+                        {addForm}
+                    </div>
+                    {!isAddingNew && (
+                        <>
+                            <p>No test cases available.</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-3"
+                                onClick={() => setIsAddingNew(true)}
+                            >
+                                <Plus /> Add test case
+                            </Button>
+                        </>
+                    )}
+                </div>
             </div>
         );
     }
@@ -121,7 +130,13 @@ export function TestCasesPanel() {
     return (
         <div className="flex h-full min-h-0 flex-col">
             {/* Main Tabs (Testcase vs Result) */}
-            <div className="flex shrink-0 items-center justify-between gap-2 border-b bg-surface-2 pl-1 pr-2">
+            <div
+                className="flex shrink-0 items-center justify-between gap-2 border-b bg-surface-2 pl-1 pr-1"
+                onDoubleClick={(event) => {
+                    if (shouldIgnorePanelHeaderDoubleClick(event.target)) return;
+                    toggleMaximizedPanel("console");
+                }}
+            >
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as PanelTab)} className="gap-0">
                     <TabsList className="h-10 justify-start gap-0 rounded-none bg-transparent p-0">
                         <TabsTrigger value="cases" className={workspaceTabTrigger}>
@@ -147,6 +162,7 @@ export function TestCasesPanel() {
                             <Plus /> Add case
                         </Button>
                     )}
+                    <PanelMaximizeToggle panel="console" />
                 </div>
             </div>
 

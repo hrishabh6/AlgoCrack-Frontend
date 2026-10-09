@@ -15,6 +15,12 @@ import { DifficultyBadge, EmptyState, TagChip } from "@/components/shared";
 import "highlight.js/styles/atom-one-dark.css"; // Import highlight.js style
 
 import { workspaceTabTrigger } from "./workspace-styles";
+import { useFocusMode } from "@/hooks/useFocusMode";
+import { shouldHideAppChrome } from "@/lib/focus-mode/routes";
+import { usePathname } from "next/navigation";
+import { PanelMaximizeToggle } from "@/components/focus-mode/PanelMaximizeToggle";
+import { useWorkspaceLayout } from "@/components/focus-mode/WorkspaceLayoutContext";
+import { shouldIgnorePanelHeaderDoubleClick } from "@/lib/focus-mode/panels";
 
 type DescriptionTab = "description" | "solutions" | "submissions" | "results";
 
@@ -25,6 +31,10 @@ type ProblemDescriptionProps = {
 };
 
 export function ProblemDescription({ dailyChallengeProblemId = null }: ProblemDescriptionProps) {
+    const pathname = usePathname();
+    const { isActive: focusModeActive } = useFocusMode();
+    const focusChromeHidden = shouldHideAppChrome(pathname, focusModeActive);
+    const { toggleMaximizedPanel } = useWorkspaceLayout();
     const { currentProblem, activeTab, setActiveTab } = useEditorStore();
 
     if (!currentProblem) {
@@ -53,7 +63,14 @@ export function ProblemDescription({ dailyChallengeProblemId = null }: ProblemDe
             onValueChange={(v) => setActiveTab(v as DescriptionTab)}
             className="flex h-full min-h-0 flex-col gap-0"
         >
-            <div className="shrink-0 overflow-x-auto border-b bg-surface-2 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div
+                className="flex shrink-0 items-center border-b bg-surface-2 pr-1"
+                onDoubleClick={(event) => {
+                    if (shouldIgnorePanelHeaderDoubleClick(event.target)) return;
+                    toggleMaximizedPanel("problem");
+                }}
+            >
+                <div className="min-w-0 flex-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <TabsList className="h-10 w-max justify-start gap-0 rounded-none bg-transparent p-0">
                     <TabsTrigger value="description" className={workspaceTabTrigger}>
                         <FileText />
@@ -72,19 +89,23 @@ export function ProblemDescription({ dailyChallengeProblemId = null }: ProblemDe
                         Results
                     </TabsTrigger>
                 </TabsList>
+                </div>
+                <PanelMaximizeToggle panel="problem" />
             </div>
 
             <TabsContent value="description" className="m-0 min-h-0 flex-1 p-0">
                 <ScrollArea className="h-full">
-                    <article className="space-y-6 px-5 pb-16 pt-5">
-                        {/* Title & difficulty */}
+                    <article className={focusChromeHidden ? "space-y-5 px-4 pb-12 pt-3" : "space-y-6 px-5 pb-16 pt-5"}>
+                        {/* Outside Focus Mode the description owns the title. In Focus Mode the toolbar already shows it. */}
                         <header className="space-y-3">
+                            {!focusChromeHidden && (
                             <h1 className="text-xl font-semibold tracking-tight text-foreground">
                                 <span className="mr-2 font-mono text-base font-normal text-subtle-foreground">
                                     {currentProblem.id}.
                                 </span>
                                 {currentProblem.questionTitle}
                             </h1>
+                            )}
                             <div className="flex flex-wrap items-center gap-1.5">
                                 {isDailyChallenge && (
                                     <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
