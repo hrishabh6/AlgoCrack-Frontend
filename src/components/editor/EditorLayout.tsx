@@ -13,6 +13,11 @@ import { useEditorStore, useSubmissionStore, useUserStore } from "@/store";
 import { QuestionDetail, TestCase } from "@/types";
 import { useEffect } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useFocusMode } from "@/hooks/useFocusMode";
+import { shouldHideAppChrome } from "@/lib/focus-mode/routes";
+import { usePathname } from "next/navigation";
+import { FocusModeBar } from "@/components/focus-mode/FocusModeBar";
+import { cn } from "@/lib/utils";
 
 interface EditorLayoutProps {
     problem: QuestionDetail;
@@ -37,6 +42,9 @@ export function EditorLayout({ problem, testCases, dailyChallengeProblemId = nul
         setLanguage 
     } = useEditorStore();
     const { reset: resetSubmission } = useSubmissionStore();
+    const pathname = usePathname();
+    const { isActive: focusModeActive } = useFocusMode();
+    const focusChromeHidden = shouldHideAppChrome(pathname, focusModeActive);
     const isDesktop = useMediaQuery("(min-width: 768px)");
     const direction = isDesktop ? "horizontal" : "vertical";
 
@@ -57,8 +65,14 @@ export function EditorLayout({ problem, testCases, dailyChallengeProblemId = nul
     }, [problem, testCases, setProblem, initializeTestcases, resetSubmission]);
 
     return (
-        <div className="flex h-[calc(100dvh-3rem)] w-full flex-col overflow-hidden bg-background p-1.5">
-            <ResizablePanelGroup key={direction} direction={direction} className="h-full w-full">
+        <div
+            className={cn(
+                "flex w-full flex-col overflow-hidden bg-background p-1.5 motion-safe:transition-[height] motion-safe:duration-150",
+                focusChromeHidden ? "h-dvh" : "h-[calc(100dvh-3rem)]"
+            )}
+        >
+            {focusChromeHidden && <FocusModeBar />}
+            <ResizablePanelGroup key={direction} direction={direction} className="min-h-0 flex-1 w-full">
                 {/* Left Panel: Problem Description */}
                 <ResizablePanel defaultSize={isDesktop ? 42 : 40} minSize={isDesktop ? 25 : 15} maxSize={75}>
                     <Pane>

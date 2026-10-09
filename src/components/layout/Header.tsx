@@ -22,6 +22,8 @@ import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { StreakBadge } from "./StreakBadge";
 import { PLAYGROUND_UI_ENABLED } from "@/lib/constants";
+import { useFocusMode } from "@/hooks/useFocusMode";
+import { shouldHideAppChrome } from "@/lib/focus-mode/routes";
 
 const baseNavLinks = [
   { href: "/problems", label: "Problems", icon: ListChecks },
@@ -44,10 +46,12 @@ function isProblemWorkspace(pathname: string) {
 
 export function Header() {
   const pathname = usePathname();
+  const { isActive: focusModeActive } = useFocusMode();
   const { theme, setTheme } = useUserStore();
   const { user, isAuthenticated, logout } = useAuth();
   const [profileImg, setProfileImg] = useState<string | null>(null);
   const inWorkspace = isProblemWorkspace(pathname);
+  const hideChrome = shouldHideAppChrome(pathname, focusModeActive);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -80,6 +84,10 @@ export function Header() {
   }, [isAuthenticated, user?.userId]);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+  if (hideChrome) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/90 backdrop-blur-sm supports-[backdrop-filter]:bg-background/75">
