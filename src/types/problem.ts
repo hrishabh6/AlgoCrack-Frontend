@@ -112,7 +112,7 @@ export interface QuestionFilters {
   size?: number;
   difficulty?: Difficulty;
   tag?: string;
-  /** Problems must carry every listed tag. */
+  /** Problems must carry at least one listed tag (union). */
   tags?: string[];
   /** Problems must not have this difficulty. */
   excludeDifficulty?: Difficulty;
