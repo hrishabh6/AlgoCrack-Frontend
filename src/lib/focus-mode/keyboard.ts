@@ -15,6 +15,10 @@ export type FocusModeKeyDownContext = {
   focusModeActive: boolean;
   onToggle: () => void;
   onExit: () => void;
+  /** When the browser is fullscreen, Escape is left to the browser. */
+  browserFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  onToggleEditorMaximize?: () => void;
 };
 
 type FocusModeKeyEvent = Pick<
@@ -33,8 +37,25 @@ export function handleFocusModeKeyDown(event: FocusModeKeyEvent, ctx: FocusModeK
     return;
   }
 
-  if (ctx.focusModeActive && event.key === "Escape" && shouldEscapeExitFocusMode()) {
+  // Ctrl+Alt+Enter toggles browser fullscreen. F11 is not intercepted.
+  if (mod && event.altKey && !event.shiftKey && event.key === "Enter" && ctx.onToggleFullscreen) {
     event.preventDefault();
-    ctx.onExit();
+    ctx.onToggleFullscreen();
+    return;
+  }
+
+  if (mod && event.altKey && !event.shiftKey && event.key.toLowerCase() === "m" && ctx.onToggleEditorMaximize) {
+    event.preventDefault();
+    ctx.onToggleEditorMaximize();
+    return;
+  }
+
+  if (event.key === "Escape") {
+    // The browser exits fullscreen on Escape. Do not prevent that default.
+    if (ctx.browserFullscreen) return;
+    if (ctx.focusModeActive && shouldEscapeExitFocusMode()) {
+      event.preventDefault();
+      ctx.onExit();
+    }
   }
 }

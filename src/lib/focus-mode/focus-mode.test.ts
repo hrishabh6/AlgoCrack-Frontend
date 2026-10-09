@@ -73,6 +73,89 @@ describe("handleFocusModeKeyDown", () => {
     expect(onExit).toHaveBeenCalledOnce();
     expect(preventDefault).toHaveBeenCalled();
   });
+
+  it("leaves Escape to the browser while fullscreen", () => {
+    const onExit = vi.fn();
+    const preventDefault = vi.fn();
+
+    handleFocusModeKeyDown(
+      {
+        key: "Escape",
+        ctrlKey: false,
+        metaKey: false,
+        shiftKey: false,
+        altKey: false,
+        defaultPrevented: false,
+        preventDefault,
+      },
+      { focusModeActive: true, browserFullscreen: true, onToggle: vi.fn(), onExit }
+    );
+
+    expect(onExit).not.toHaveBeenCalled();
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  it("does not intercept F11", () => {
+    const onToggleFullscreen = vi.fn();
+    const preventDefault = vi.fn();
+
+    handleFocusModeKeyDown(
+      {
+        key: "F11",
+        ctrlKey: false,
+        metaKey: false,
+        shiftKey: false,
+        altKey: false,
+        defaultPrevented: false,
+        preventDefault,
+      },
+      { focusModeActive: true, onToggle: vi.fn(), onExit: vi.fn(), onToggleFullscreen }
+    );
+
+    expect(onToggleFullscreen).not.toHaveBeenCalled();
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  it("toggles fullscreen on Ctrl+Alt+Enter", () => {
+    const onToggleFullscreen = vi.fn();
+    const preventDefault = vi.fn();
+
+    handleFocusModeKeyDown(
+      {
+        key: "Enter",
+        ctrlKey: true,
+        metaKey: false,
+        shiftKey: false,
+        altKey: true,
+        defaultPrevented: false,
+        preventDefault,
+      },
+      { focusModeActive: true, onToggle: vi.fn(), onExit: vi.fn(), onToggleFullscreen }
+    );
+
+    expect(onToggleFullscreen).toHaveBeenCalledOnce();
+    expect(preventDefault).toHaveBeenCalled();
+  });
+
+  it("toggles editor maximize on Ctrl+Alt+M", () => {
+    const onToggleEditorMaximize = vi.fn();
+    const preventDefault = vi.fn();
+
+    handleFocusModeKeyDown(
+      {
+        key: "m",
+        ctrlKey: true,
+        metaKey: false,
+        shiftKey: false,
+        altKey: true,
+        defaultPrevented: false,
+        preventDefault,
+      },
+      { focusModeActive: true, onToggle: vi.fn(), onExit: vi.fn(), onToggleEditorMaximize }
+    );
+
+    expect(onToggleEditorMaximize).toHaveBeenCalledOnce();
+  });
 });
 
 describe("focus mode session storage", () => {
@@ -94,6 +177,13 @@ describe("focus mode session storage", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("treats malformed persisted values as off", () => {
+    store.set(FOCUS_MODE_STORAGE_KEY, "fullscreen");
+    expect(readFocusModePreference()).toBe(false);
+    store.set(FOCUS_MODE_STORAGE_KEY, "{\"fullscreen\":true}");
+    expect(readFocusModePreference()).toBe(false);
   });
 
   it("persists preference in sessionStorage", () => {

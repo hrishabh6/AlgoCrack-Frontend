@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { exitFocusMode } from "@/lib/focus-mode/actions";
 import {
   readFocusModePreference,
   subscribeFocusModePreference,
@@ -27,7 +28,7 @@ export function useFocusMode() {
   }, []);
 
   const exit = useCallback(() => {
-    writeFocusModePreference(false);
+    exitFocusMode();
   }, []);
 
   return { isActive, setActive, toggle, exit };

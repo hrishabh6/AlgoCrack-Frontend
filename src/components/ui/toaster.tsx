@@ -1,7 +1,9 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
 import { useToastStore } from "@/store/useToastStore";
+import { useFullscreenPortalContainer } from "@/hooks/useFullscreenPortal";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
@@ -19,8 +21,9 @@ const ICON_TONE = {
 export function Toaster() {
   const toasts = useToastStore((s) => s.toasts);
   const dismiss = useToastStore((s) => s.dismiss);
+  const container = useFullscreenPortalContainer();
 
-  return (
+  const ui = (
     <div
       aria-live="polite"
       aria-relevant="additions"
@@ -58,4 +61,7 @@ export function Toaster() {
       })}
     </div>
   );
+
+  if (container) return createPortal(ui, container);
+  return ui;
 }
